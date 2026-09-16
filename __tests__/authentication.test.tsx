@@ -11,6 +11,16 @@ import { AuthProvider } from '../src/features/auth/AuthProvider';
 import { RootNavigator } from '../src/app/navigation/RootNavigator';
 import type { AuthService, AuthUser } from '../src/features/auth/types';
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  act(() => {
+    jest.runOnlyPendingTimers();
+  });
+  jest.useRealTimers();
+});
+
 function setup(initialUser: AuthUser | null = null) {
   let emit: (user: AuthUser | null) => void = () => {};
   const unsubscribe = jest.fn();
