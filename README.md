@@ -37,6 +37,12 @@ This produces a debug APK that expects Metro during development. It is not a
 production release. The template's release signing configuration is a development
 default and must be replaced before publishing.
 
+If Android shows **Unable to load script**, first make sure `npm start` has
+finished and reports that the development server is ready. Use port 8081 for
+the default build, then reload the app. A physical USB device may also need
+`adb reverse tcp:8081 tcp:8081`. This message concerns the local JavaScript
+server, not Firebase authentication.
+
 ## Firebase setup
 
 The supplied public Firebase configuration is in
@@ -133,8 +139,19 @@ npm run format:check
 
 Tests cover validation, Firebase service calls, secure-storage behavior, failed
 sign-in, registration-to-Calendar navigation, session restoration, duplicate
-submission prevention, and Profile logout. Device testing is still needed for
-native secure storage and real Firebase connectivity.
+submission prevention, and Profile logout.
+
+Verified on September 17, 2026:
+
+- All 22 tests across five suites pass, as do TypeScript, ESLint, and formatting.
+- The Android x86_64 debug APK builds and runs on the Pixel 10 emulator.
+- Live Firebase registration opens Calendar, and Profile displays the account.
+- Restarting the app restores the session from native secure storage.
+- Logout remains effective after a restart, and the account can sign in again.
+- The disposable Firebase accounts created for verification were deleted.
+
+Physical-device and iOS verification are still pending. Emulator testing does
+not establish biometric behavior; biometrics are not implemented in this milestone.
 
 Firebase's public TypeScript declarations currently omit the React Native-only
 `getReactNativePersistence` export. `src/types/firebase-auth.d.ts` describes that
@@ -165,7 +182,14 @@ The original Expo starter and the pre-existing modified lockfile were backed up
 locally under `.git/task-backups/before-react-native-cli/` before migration. This
 backup is not committed. The original starter also remains in Git history.
 
+Metro excludes `.git/` from its module and asset file map so local backups and
+diagnostic files cannot cause unwanted development refreshes.
+
 See [Subtask 1 requirements](docs/subtask-1-authentication.md) for acceptance criteria.
+
+For a beginner-friendly walkthrough of the actual code, read the
+[implementation guide](docs/implementation-guide.md). It follows a button tap
+through validation, Firebase, session state, and navigation, and explains the tests.
 
 References: [React Native CLI setup](https://reactnative.dev/docs/getting-started-without-a-framework),
 [Firebase React Native support](https://firebase.google.com/docs/web/environments-js-sdk),

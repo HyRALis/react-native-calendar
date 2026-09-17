@@ -69,3 +69,14 @@ features should add tests alongside their implementation. Commit bodies should
 explain the reason for the change and the verification actually performed.
 
 See the root README for commands, Firebase setup, and a guided code walkthrough.
+
+## Verification record
+
+On September 17, 2026, all 22 automated tests passed and the Android x86_64 debug
+APK built successfully. A Pixel 10 emulator connected to the real Firebase
+project verified registration, Profile data, secure session restoration after
+process restart, logout across restarts, and signing in again. Disposable test
+accounts were removed after verification. Physical-device and iOS checks remain
+pending; biometric and meeting features remain outside this milestone.
+
+The [implementation guide](implementation-guide.md) explains the code step by step.
