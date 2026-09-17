@@ -74,7 +74,7 @@ test('registration opens Calendar and Profile logout removes private screens', a
     email: 'learner@example.com',
     password: 'password123',
   });
-  fireEvent.press(screen.getByLabelText(/Profile, tab/));
+  fireEvent.press(screen.getByLabelText('Profile'));
   await screen.findByText('learner@example.com');
   fireEvent.press(screen.getByRole('button', { name: 'Logout' }));
   await screen.findByText('Welcome back');
@@ -129,7 +129,7 @@ test('logout failure does not pretend the persisted session is cleared', async (
   jest
     .mocked(service.signOut)
     .mockRejectedValueOnce(new Error('storage failure'));
-  fireEvent.press(screen.getByLabelText(/Profile, tab/));
+  fireEvent.press(screen.getByLabelText('Profile'));
   fireEvent.press(screen.getByRole('button', { name: 'Logout' }));
   await screen.findByText('Something went wrong. Please try again.');
   expect(screen.getByText('Your profile')).toBeOnTheScreen();

@@ -75,12 +75,18 @@ export function RootNavigator() {
           <Tabs.Screen
             name="Calendar"
             component={CalendarScreen}
-            options={{ tabBarIcon: CalendarIcon }}
+            options={{
+              tabBarIcon: CalendarIcon,
+              tabBarAccessibilityLabel: 'Calendar',
+            }}
           />
           <Tabs.Screen
             name="Profile"
             component={ProfileScreen}
-            options={{ tabBarIcon: ProfileIcon }}
+            options={{
+              tabBarIcon: ProfileIcon,
+              tabBarAccessibilityLabel: 'Profile',
+            }}
           />
         </Tabs.Navigator>
       ) : (
