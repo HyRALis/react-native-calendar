@@ -163,6 +163,11 @@ Reusable UI lives in `src/shared/components`. Feature behavior lives in
 `src/features/auth`, `calendar`, and `profile`. Extract components when there is a
 real shared responsibility; keep validation and networking out of presentation code.
 
+The [UI library guide](docs/ui-library.md) documents the atomic structure,
+shared design tokens, typography, button variants, form inputs, checkboxes, and
+switches, with composition examples and testing guidance. Import components and
+their prop types from `src/shared/components`.
+
 ## Checks
 
 ```powershell

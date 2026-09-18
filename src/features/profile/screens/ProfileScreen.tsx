@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { authErrorMessage } from '../../auth/services/authErrorMessage';
-import { Button } from '../../../shared/components/Button';
-import { colors } from '../../../shared/theme';
+import { Button, Typography } from '../../../shared/components';
+import { colors, radii, spacing } from '../../../shared/theme';
 
 export function ProfileScreen() {
   const { state, service } = useAuth();
@@ -28,24 +28,32 @@ export function ProfileScreen() {
   }
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>
+      <Typography
+        accessibilityRole="header"
+        variant="heading"
+        style={styles.title}
+      >
         Your profile
-      </Text>
-      <Text style={styles.subtitle}>Your account, all in one place.</Text>
+      </Typography>
+      <Typography tone="muted">Your account, all in one place.</Typography>
       <View style={styles.card}>
-        <Text style={styles.label}>EMAIL ADDRESS</Text>
-        <Text selectable style={styles.email}>
+        <Typography variant="overline" tone="muted">
+          EMAIL ADDRESS
+        </Typography>
+        <Typography selectable style={styles.email}>
           {state.user?.email ?? 'No email address'}
-        </Text>
-        <Text style={styles.label}>ACCOUNT ID</Text>
-        <Text selectable style={styles.id}>
+        </Typography>
+        <Typography variant="overline" tone="muted">
+          ACCOUNT ID
+        </Typography>
+        <Typography selectable variant="caption" tone="muted">
           {state.user?.id}
-        </Text>
+        </Typography>
       </View>
       {error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
+        <Typography accessibilityRole="alert" variant="caption" tone="error">
           {error}
-        </Text>
+        </Typography>
       ) : null}
       <Button
         title="Logout"
@@ -61,27 +69,18 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     backgroundColor: colors.background,
-    padding: 24,
-    gap: 16,
+    padding: spacing.xxl,
+    gap: spacing.lg,
   },
-  title: { fontSize: 32, fontWeight: '700', color: colors.text, marginTop: 16 },
-  subtitle: { color: colors.muted, fontSize: 16 },
+  title: { marginTop: spacing.lg },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 24,
-    gap: 12,
-    marginVertical: 16,
+    borderRadius: radii.xl,
+    padding: spacing.xxl,
+    gap: spacing.md,
+    marginVertical: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.muted,
-  },
-  email: { fontSize: 18, color: colors.text, marginBottom: 12 },
-  id: { fontSize: 14, color: colors.muted },
-  error: { color: colors.error, fontSize: 14 },
+  email: { marginBottom: spacing.md },
 });

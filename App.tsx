@@ -9,7 +9,7 @@ import {
 import { AuthProvider } from './src/features/auth/AuthProvider';
 import { getFirebaseAuthService } from './src/features/auth/services/firebaseAuthService';
 import type { AuthService } from './src/features/auth/types';
-import { StatusScreen } from './src/shared/components/StatusScreen';
+import { StatusScreen } from './src/shared/components';
 
 function initialize(): { service: AuthService | null; message?: string } {
   if (!isFirebaseConfigured(firebaseConfig)) {

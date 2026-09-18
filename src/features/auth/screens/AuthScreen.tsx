@@ -4,7 +4,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,9 +14,8 @@ import {
   type CredentialErrors,
 } from '../validation/validateCredentials';
 import { authErrorMessage } from '../services/authErrorMessage';
-import { Button } from '../../../shared/components/Button';
-import { FormField } from '../../../shared/components/FormField';
-import { colors } from '../../../shared/theme';
+import { Button, FormField, Typography } from '../../../shared/components';
+import { colors, radii, spacing } from '../../../shared/theme';
 
 export function AuthScreen({
   mode,
@@ -70,23 +68,25 @@ export function AuthScreen({
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.brand}>CALENDAR</Text>
+          <Typography variant="overline" tone="primary" style={styles.brand}>
+            CALENDAR
+          </Typography>
           <View style={styles.heading}>
-            <Text accessibilityRole="header" style={styles.title}>
+            <Typography accessibilityRole="header" variant="display">
               {isSignUp
                 ? 'Make time for\nwhat matters.'
                 : 'A little more\nspace for your day.'}
-            </Text>
-            <Text style={styles.subtitle}>
+            </Typography>
+            <Typography tone="muted">
               {isSignUp
                 ? 'Create your account to get started.'
                 : 'Sign in to your personal calendar.'}
-            </Text>
+            </Typography>
           </View>
           <View style={styles.form}>
-            <Text style={styles.formTitle}>
+            <Typography variant="subtitle">
               {isSignUp ? 'Create account' : 'Welcome back'}
-            </Text>
+            </Typography>
             <FormField
               label="Email"
               value={email}
@@ -98,7 +98,7 @@ export function AuthScreen({
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
-              editable={!loading}
+              disabled={loading}
             />
             <FormField
               label="Password"
@@ -111,16 +111,20 @@ export function AuthScreen({
               autoCorrect={false}
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
               textContentType={isSignUp ? 'newPassword' : 'password'}
-              editable={!loading}
+              disabled={loading}
               returnKeyType="go"
               onSubmitEditing={() => {
                 void submit();
               }}
             />
             {message ? (
-              <Text accessibilityRole="alert" style={styles.error}>
+              <Typography
+                accessibilityRole="alert"
+                variant="caption"
+                tone="error"
+              >
                 {message}
-              </Text>
+              </Typography>
             ) : null}
             <Button
               title={isSignUp ? 'Create account' : 'Sign in'}
@@ -130,9 +134,13 @@ export function AuthScreen({
               }}
             />
           </View>
-          <Text style={styles.switchPrompt}>
+          <Typography
+            variant="caption"
+            tone="muted"
+            style={styles.switchPrompt}
+          >
             {isSignUp ? 'Already have an account?' : 'New here?'}
-          </Text>
+          </Typography>
           <Button
             variant="secondary"
             title={isSignUp ? 'Go to sign in' : 'Create an account'}
@@ -150,41 +158,27 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
-    gap: 16,
+    padding: spacing.xxl,
+    gap: spacing.lg,
     width: '100%',
     maxWidth: 520,
     alignSelf: 'center',
   },
   brand: {
-    fontSize: 13,
-    fontWeight: '800',
     letterSpacing: 3,
-    color: colors.primary,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
-  heading: { gap: 12, marginBottom: 16 },
-  title: {
-    color: colors.text,
-    fontSize: 34,
-    fontWeight: '700',
-    lineHeight: 42,
-  },
-  subtitle: { color: colors.muted, fontSize: 16, lineHeight: 24 },
+  heading: { gap: spacing.md, marginBottom: spacing.lg },
   form: {
     backgroundColor: colors.surface,
-    padding: 20,
-    borderRadius: 20,
-    gap: 20,
+    padding: spacing.xl,
+    borderRadius: radii.xl,
+    gap: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  formTitle: { fontSize: 21, fontWeight: '700', color: colors.text },
-  error: { color: colors.error, fontSize: 14, lineHeight: 21 },
   switchPrompt: {
     textAlign: 'center',
-    color: colors.muted,
-    fontSize: 14,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
 });

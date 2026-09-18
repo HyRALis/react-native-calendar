@@ -10,7 +10,7 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { AuthScreen } from '../../features/auth/screens/AuthScreen';
 import { CalendarScreen } from '../../features/calendar/screens/CalendarScreen';
 import { ProfileScreen } from '../../features/profile/screens/ProfileScreen';
-import { StatusScreen } from '../../shared/components/StatusScreen';
+import { StatusScreen } from '../../shared/components';
 import { colors } from '../../shared/theme';
 
 type AuthRoutes = { SignIn: undefined; SignUp: undefined };
