@@ -71,6 +71,13 @@ then reload the app. A release build needs a new bundle/build to pick up changes
 On CI, supply the six variables in the build environment or create `.env` before
 bundling; install dev dependencies because Babel needs the plugin.
 
+If Metro reports **Unable to resolve module @env**, stop the existing Metro server
+first (Ctrl+C in its terminal), then run `npm run start:reset` from the project root
+and reload the app. This is a shortcut for starting Metro with its cache cleared.
+`@env` is a virtual import that Babel replaces, not a package to install. A server
+using an old transform can try to resolve it as an actual package. Starting a second
+server while the original still owns port 8081 will not fix the original server.
+
 The app uses Firebase's JavaScript SDK, which supports email/password
 sign-in in React Native. A Firebase web app registration supplies its identifiers;
 it does not turn this application into a website. No Analytics SDK is installed.
