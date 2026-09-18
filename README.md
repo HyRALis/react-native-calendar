@@ -13,6 +13,8 @@ when the SDK licenses have already been accepted.
 
 ```powershell
 npm ci
+# First setup only: fill in your Firebase values after copying the template.
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 npm start
 ```
 
@@ -45,15 +47,37 @@ server, not Firebase authentication.
 
 ## Firebase setup
 
-The supplied public Firebase configuration is in
-[`src/config/firebaseConfig.ts`](src/config/firebaseConfig.ts).
+The supplied public Firebase configuration is in the local, Git-ignored `.env`.
+On a fresh clone, copy [`.env.example`](.env.example) to `.env` and fill in the
+values from **Firebase Console > Project settings > General > Your apps > Web app**:
+
+| Firebase field      | Environment variable           |
+| ------------------- | ------------------------------ |
+| `apiKey`            | `FIREBASE_API_KEY`             |
+| `authDomain`        | `FIREBASE_AUTH_DOMAIN`         |
+| `projectId`         | `FIREBASE_PROJECT_ID`          |
+| `storageBucket`     | `FIREBASE_STORAGE_BUCKET`      |
+| `messagingSenderId` | `FIREBASE_MESSAGING_SENDER_ID` |
+| `appId`             | `FIREBASE_APP_ID`              |
+
+[`src/config/firebaseConfig.ts`](src/config/firebaseConfig.ts) reads these values
+through `@env`. The `react-native-dotenv` Babel plugin replaces those imports
+when Metro bundles JavaScript. TypeScript declarations live in `src/types/env.d.ts`.
+No native linking or Expo package is needed. Missing or blank required values
+show the account-setup screen before Firebase starts.
+
+After editing `.env`, stop Metro and restart with `npm start -- --reset-cache`,
+then reload the app. A release build needs a new bundle/build to pick up changes.
+On CI, supply the six variables in the build environment or create `.env` before
+bundling; install dev dependencies because Babel needs the plugin.
+
 The app uses Firebase's JavaScript SDK, which supports email/password
 sign-in in React Native. A Firebase web app registration supplies its identifiers;
 it does not turn this application into a website. No Analytics SDK is installed.
 
 In the [Firebase console](https://console.firebase.google.com/):
 
-1. Open project `react-native-calendar-d0d40`.
+1. Open the Firebase project identified by `FIREBASE_PROJECT_ID` in your `.env`.
 2. Open **Build > Authentication > Sign-in method** (select **Get started** first
    if necessary).
 3. Enable **Email/Password**, then save. Email-link sign-in is not required.
@@ -61,8 +85,12 @@ In the [Firebase console](https://console.firebase.google.com/):
    characters to match the app's validation. Firebase enforces its configured
    policy; stronger policies may reject passwords accepted by the basic form.
 
-The configuration contains public identifiers. Never put service-account private
-keys or user passwords in this repository. Firebase handles password verification.
+The configuration contains public identifiers that remain readable in the app
+bundle. `.env` separates configuration from code; it does not encrypt it. Never
+put service-account private keys or user passwords in the app's `.env` or source.
+Firebase handles password verification; Security Rules must protect future data.
+Only `.env.example` is committed. Earlier commits still contain the original public
+configuration; moving it does not rewrite Git history.
 
 ## Try the first feature
 
@@ -152,6 +180,12 @@ Verified on September 17, 2026:
 
 Physical-device and iOS verification are still pending. Emulator testing does
 not establish biometric behavior; biometrics are not implemented in this milestone.
+
+The `.env` migration was verified on September 18, 2026: all 28 tests across six
+suites, TypeScript, ESLint, and formatting of changed files passed. An Android
+release-mode Metro bundle contains all six local configuration values. Separate
+Babel checks verified missing-file handling and CI-provided variables. This
+configuration change was not re-tested on a device or against live Firebase.
 
 Firebase's public TypeScript declarations currently omit the React Native-only
 `getReactNativePersistence` export. `src/types/firebase-auth.d.ts` describes that

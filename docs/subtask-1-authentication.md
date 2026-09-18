@@ -2,7 +2,8 @@
 
 Backend decision: Firebase Authentication. The application uses React Native
 Community CLI and strict TypeScript, without Expo. The public Firebase app
-configuration supplied by the user is connected in `src/config/firebaseConfig.ts`.
+configuration supplied by the user lives in a Git-ignored `.env` and is read by
+`src/config/firebaseConfig.ts`. `.env.example` documents the variables for a fresh clone.
 
 ## Implemented behavior
 

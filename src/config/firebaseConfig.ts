@@ -1,14 +1,22 @@
 import type { FirebaseOptions } from 'firebase/app';
+import {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID,
+} from '@env';
 
-// Firebase Console > Project settings > Your apps > Web app configuration.
-// These are public app identifiers, never service-account credentials.
+// Babel replaces @env imports with public configuration at build time.
+// Keep actual values in .env; see .env.example for the required variable names.
 export const firebaseConfig: FirebaseOptions = {
-  apiKey: 'AIzaSyCpuNQJ8AR0ZhdAsmd2ZuWMscLRiIxfhCI',
-  authDomain: 'react-native-calendar-d0d40.firebaseapp.com',
-  projectId: 'react-native-calendar-d0d40',
-  storageBucket: 'react-native-calendar-d0d40.firebasestorage.app',
-  messagingSenderId: '105623455519',
-  appId: '1:105623455519:web:e0c5b8e71a16ed126f522a',
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
 };
 
 export function isFirebaseConfigured(config: FirebaseOptions): boolean {

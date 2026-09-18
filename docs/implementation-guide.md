@@ -22,6 +22,36 @@ JavaScript because that is the tooling's normal format.
 
 ## 2. Trace startup before reading a form
 
+First look at [`.env.example`](../.env.example) and
+[`firebaseConfig.ts`](../src/config/firebaseConfig.ts). `.env` is a local text file
+with `NAME=value` entries. It tells this build which Firebase project to use.
+We already populated your local file; another developer copies the example and
+fills in their own Firebase project's public values. Git ignores `.env`, while
+the example is committed so everyone knows which variables to provide.
+
+React Native CLI does not automatically load `.env`. The `react-native-dotenv`
+plugin in [`babel.config.js`](../babel.config.js) reads it during bundling and
+replaces named imports from the virtual `@env` module with their values. Babel
+transforms the JavaScript; Metro packages the result for the phone. There is no
+`.env` file reader running on the phone and no new native library to install.
+
+[`env.d.ts`](../src/types/env.d.ts) tells TypeScript which variable names exist.
+Each can be `undefined`, because the developer might not have configured it yet.
+`isFirebaseConfigured` checks required values at runtime; without them the app
+shows account setup pending instead of attempting sign-in. Storage and messaging
+identifiers are included in the example but are not required for our auth feature.
+
+After changing a value, stop Metro, run `npm start -- --reset-cache`, and reload
+the app. The values are inserted during bundling, so changing the local file cannot
+change an already installed release. CI can provide the same named environment
+variables before bundling without committing a `.env` file.
+
+Use `.env` for **public client configuration**. It keeps environment choices out
+of source code, but the values are still readable in the final app. Firebase
+service-account private keys belong on a backend, never in a mobile `.env`.
+See [Firebase configuration guidance](https://firebase.google.com/docs/projects/learn-more#config-files-objects)
+and the [plugin's setup documentation](https://github.com/dotenvx/react-native-dotenv).
+
 Open [`App.tsx`](../App.tsx). It initializes Firebase, provides safe screen areas,
 and mounts `AuthProvider` around `RootNavigator`.
 
@@ -208,6 +238,8 @@ custom server must prevent users from accessing someone else's meetings.
 
 Start with these:
 
+- [`firebaseConfig.test.ts`](../src/config/firebaseConfig.test.ts) checks that
+  missing or blank required configuration prevents authentication startup.
 - [`validateCredentials.test.ts`](../src/features/auth/validation/validateCredentials.test.ts)
   checks business rules without rendering a screen.
 - [`firebaseAuthService.test.ts`](../src/features/auth/services/firebaseAuthService.test.ts)

@@ -70,6 +70,7 @@ yarn-error.log
 .expo/
 expo-env.d.ts
 .env*
+!.env.example
 *.tsbuildinfo
 *.jks
 *.p8
