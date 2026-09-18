@@ -11,6 +11,7 @@ export const colors = {
   error: '#AD3030',
   onPrimary: '#FFFFFF',
   disabledSurface: '#E9EEF1',
+  scrim: 'rgba(23, 43, 58, 0.45)',
 } as const;
 
 export const spacing = {

@@ -9,16 +9,22 @@ the app's light palette; dark mode is not implemented.
 ```text
 src/shared/
   theme.ts                    Colors, spacing, radii, typography, control sizes
+  utils/
+    paging.ts                 Pure scroll-offset to page-index maths
   components/
     index.ts                  Public component and prop-type exports
     atoms/
       Typography.tsx          Text styles and semantic tones
       Button.tsx              Actions, variants, sizes, pending state
+      IconButton.tsx          Square glyph-only tap target for compact actions
       TextInput.tsx           Input, focus feedback, invalid/disabled states
       Checkbox.tsx            Controlled boolean selection
       Switch.tsx              Controlled native toggle
     molecules/
       FormField.tsx           Label + TextInput + helper/error text
+      HorizontalPager.tsx     Controlled snap-to-page horizontal list
+      OptionPicker.tsx        Modal single-choice list, generic over its value
+      PageHeader.tsx          Safe-area page title + hamburger menu action
     organisms/
       StatusScreen.tsx        Loading, message, and retry composition
 ```
@@ -170,6 +176,14 @@ The checkbox has a minimum 44-by-44 touch target. Switch appearance and dimensio
 follow the native platform. Visible labels in this basic composition are text;
 only the control is interactive.
 
+### Page headers
+
+`PageHeader` accepts `title`, `onMenuPress`, and optional `menuOpen`. It handles
+top/side safe areas and exposes a labeled hamburger button with its expanded
+state. The parent owns opening and closing the menu. `MainNavigator` uses it for
+Calendar and Profile; `CalendarDrawer` remains in the calendar feature because
+its choices and selection behavior are feature-specific.
+
 ## Extending and testing
 
 1. Reuse tokens from `shared/theme.ts` before introducing new values. Screen-only
@@ -191,3 +205,24 @@ The authentication integration tests also exercise the library in existing
 screens. Device checks should cover VoiceOver/TalkBack announcements, large font
 sizes, multiline input, keyboard focus, and native switch appearance on Android
 and iOS; Jest cannot establish those behaviors on a real device.
+
+## Horizontal paging
+
+`HorizontalPager` is the swipe primitive behind the month calendar. It is
+controlled: `index` decides the page, and a settled swipe reports the new index
+through `onIndexChange`. Two rules keep the two directions from fighting.
+
+`items` must keep a stable identity. A `data` array rebuilt on every render
+makes the list re-measure and snap back, so build it once with `useMemo` and
+never recompute it from the current page.
+
+A gesture-origin ref records the page a swipe settled on before the callback
+runs, so the scroll effect skips index changes the user just made and only
+scrolls for programmatic ones, such as a picker.
+
+The offset-to-index rule lives in `src/shared/utils/paging.ts` as a pure
+function, so it is unit tested directly — including zero width on the first
+layout pass and overscroll past either end — instead of through a simulated
+gesture. Only the wiring needs a render test. Horizontal paging is not operable
+with a screen reader, so any use of this pager must also offer buttons that move
+between pages; the calendar's actions bar provides them.

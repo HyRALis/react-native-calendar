@@ -18,5 +18,5 @@ jest.mock('../src/config/firebaseConfig', () => ({
 test('explains missing account setup without crashing or granting access', () => {
   render(<App />);
   expect(screen.getByText('Account setup is pending')).toBeOnTheScreen();
-  expect(screen.queryByText('Your calendar')).toBeNull();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Modal } from 'react-native';
 import {
   act,
   fireEvent,
@@ -69,7 +70,7 @@ test('registration opens Calendar and Profile logout removes private screens', a
   fireEvent.press(screen.getByRole('button', { name: 'Create an account' }));
   fillForm();
   fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
-  await screen.findByText('Your calendar');
+  await screen.findByTestId('calendar-view-month');
   expect(service.signUp).toHaveBeenCalledWith({
     email: 'learner@example.com',
     password: 'password123',
@@ -80,7 +81,7 @@ test('registration opens Calendar and Profile logout removes private screens', a
   await screen.findByText('Welcome back');
   expect(service.signOut).toHaveBeenCalledTimes(1);
   expect(screen.queryByText('Your profile')).toBeNull();
-  expect(screen.queryByText('Your calendar')).toBeNull();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
 });
 
 test('sign-in failure stays on the form with a readable error', async () => {
@@ -91,7 +92,7 @@ test('sign-in failure stays on the form with a readable error', async () => {
   fillForm('wrong');
   fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
   await screen.findByText('The email or password is incorrect.');
-  expect(screen.queryByText('Your calendar')).toBeNull();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
 });
 
 test('restored Firebase user starts on Calendar and unsubscribes on unmount', () => {
@@ -99,7 +100,7 @@ test('restored Firebase user starts on Calendar and unsubscribes on unmount', ()
     id: 'restored',
     email: 'returning@example.com',
   });
-  expect(screen.getByText('Your calendar')).toBeOnTheScreen();
+  expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
   unmount();
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 });
@@ -133,4 +134,71 @@ test('logout failure does not pretend the persisted session is cleared', async (
   fireEvent.press(screen.getByRole('button', { name: 'Logout' }));
   await screen.findByText('Something went wrong. Please try again.');
   expect(screen.getByText('Your profile')).toBeOnTheScreen();
+});
+
+test('calendar header opens the drawer and switches between all three views', () => {
+  setup({ id: 'restored', email: 'returning@example.com' });
+  expect(screen.getByRole('header', { name: 'Calendar' })).toBeOnTheScreen();
+  expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
+
+  for (const view of ['Day', 'Week', 'Month']) {
+    fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+    expect(
+      screen.getByRole('header', { name: 'Calendar views' }),
+    ).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('radio', { name: view }));
+    expect(screen.queryByText('Calendar views')).toBeNull();
+    expect(
+      screen.getByTestId(`calendar-view-${view.toLowerCase()}`),
+    ).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+    expect(
+      screen.getByRole('radio', { name: view, checked: true }),
+    ).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Close menu' }));
+  }
+});
+
+test('drawer closes with backdrop and Android back without changing the view', () => {
+  setup({ id: 'restored', email: 'returning@example.com' });
+  fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Dismiss calendar menu' }),
+  );
+  expect(screen.queryByText('Calendar views')).toBeNull();
+  fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+  fireEvent(screen.UNSAFE_getByType(Modal), 'requestClose');
+  expect(screen.queryByText('Calendar views')).toBeNull();
+  expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
+});
+
+test('view selection survives tab changes and the Profile menu returns to Calendar', () => {
+  setup({ id: 'restored', email: 'returning@example.com' });
+  fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+  fireEvent.press(screen.getByRole('radio', { name: 'Week' }));
+  fireEvent.press(screen.getByLabelText('Profile'));
+  expect(screen.getByRole('header', { name: 'Profile' })).toBeOnTheScreen();
+  fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+  expect(
+    screen.getByRole('radio', { name: 'Week', checked: true }),
+  ).toBeOnTheScreen();
+  fireEvent.press(screen.getByRole('radio', { name: 'Day' }));
+  expect(screen.getByRole('header', { name: 'Calendar' })).toBeOnTheScreen();
+  expect(screen.getByTestId('calendar-view-day')).toBeOnTheScreen();
+  expect(screen.queryByText('Calendar views')).toBeNull();
+});
+
+test('logout clears the calendar view preference for the next session', async () => {
+  setup({ id: 'restored', email: 'returning@example.com' });
+  fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
+  fireEvent.press(screen.getByRole('radio', { name: 'Day' }));
+  fireEvent.press(screen.getByLabelText('Profile'));
+  fireEvent.press(screen.getByRole('button', { name: 'Logout' }));
+  await screen.findByText('Welcome back');
+  expect(
+    screen.queryByRole('button', { name: 'Open calendar menu' }),
+  ).toBeNull();
+  fillForm();
+  fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+  await screen.findByTestId('calendar-view-month');
 });

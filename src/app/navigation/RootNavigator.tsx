@@ -4,19 +4,14 @@ import {
   createNativeStackNavigator,
   type NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text } from 'react-native';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { AuthScreen } from '../../features/auth/screens/AuthScreen';
-import { CalendarScreen } from '../../features/calendar/screens/CalendarScreen';
-import { ProfileScreen } from '../../features/profile/screens/ProfileScreen';
 import { StatusScreen } from '../../shared/components';
 import { colors } from '../../shared/theme';
+import { MainNavigator } from './MainNavigator';
 
 type AuthRoutes = { SignIn: undefined; SignUp: undefined };
-type MainRoutes = { Calendar: undefined; Profile: undefined };
 const AuthStack = createNativeStackNavigator<AuthRoutes>();
-const Tabs = createBottomTabNavigator<MainRoutes>();
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -39,13 +34,6 @@ function SignUp({ navigation }: NativeStackScreenProps<AuthRoutes, 'SignUp'>) {
     <AuthScreen mode="signUp" onSwitch={() => navigation.replace('SignIn')} />
   );
 }
-function CalendarIcon({ color }: { color: string }) {
-  return <Text style={[styles.icon, { color }]}>▦</Text>;
-}
-function ProfileIcon({ color }: { color: string }) {
-  return <Text style={[styles.icon, { color }]}>○</Text>;
-}
-
 export function RootNavigator() {
   const { state, retry } = useAuth();
   if (state.status === 'loading') {
@@ -64,31 +52,7 @@ export function RootNavigator() {
   return (
     <NavigationContainer theme={theme}>
       {state.status === 'signedIn' ? (
-        <Tabs.Navigator
-          key={state.user.id}
-          screenOptions={{
-            tabBarActiveTintColor: colors.primary,
-            tabBarInactiveTintColor: colors.muted,
-            headerShadowVisible: false,
-          }}
-        >
-          <Tabs.Screen
-            name="Calendar"
-            component={CalendarScreen}
-            options={{
-              tabBarIcon: CalendarIcon,
-              tabBarAccessibilityLabel: 'Calendar',
-            }}
-          />
-          <Tabs.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{
-              tabBarIcon: ProfileIcon,
-              tabBarAccessibilityLabel: 'Profile',
-            }}
-          />
-        </Tabs.Navigator>
+        <MainNavigator key={state.user.id} />
       ) : (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="SignIn" component={SignIn} />
@@ -98,5 +62,3 @@ export function RootNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({ icon: { fontSize: 22 } });

@@ -113,7 +113,15 @@ configuration; moving it does not rewrite Git history.
 Registration creates a real account in your Firebase project. Automated tests
 replace the authentication service and never create cloud accounts.
 
-Calendar is a landing screen for this subtask. Meeting creation/editing,
+Calendar now includes a page-title header and a left menu with Day, Week, and Month
+views. Month is the default. The selection stays active while switching tabs and
+resets after logout. The same menu on Profile returns to the chosen calendar view.
+Close it using **Close menu**, the backdrop, or Android Back.
+
+The initial layouts show today's hourly schedule, the current week's daily agenda,
+or a month grid with today highlighted. Weeks start on Monday. These are empty
+layouts; event data and browsing other dates are not implemented yet.
+Meeting creation/editing,
 biometrics, email verification, and password recovery are not implemented yet.
 Logout signs out this installation; it does not revoke sessions on other devices.
 
@@ -128,6 +136,8 @@ Read these files in this order:
 3. [`RootNavigator.tsx`](src/app/navigation/RootNavigator.tsx) chooses the public
    sign-in/sign-up screens or the private Calendar/Profile tabs. It waits for
    session restoration and removes private navigation history after logout.
+   [`MainNavigator.tsx`](src/app/navigation/MainNavigator.tsx) owns the signed-in
+   header, calendar drawer, and calendar view preference.
 4. [`AuthScreen.tsx`](src/features/auth/screens/AuthScreen.tsx) renders the forms.
    React state tracks field values, errors, and whether a request is in progress.
 5. [`validateCredentials.ts`](src/features/auth/validation/validateCredentials.ts)
