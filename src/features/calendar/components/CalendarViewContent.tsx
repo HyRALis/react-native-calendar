@@ -1,56 +1,76 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { spacing } from '../../../shared/theme';
 import type { CalendarEvent, CalendarView } from '../types';
-import { MonthPager } from './MonthPager';
+import { CalendarPager } from './CalendarPager';
 import { DayView } from './views/DayView';
+import { MonthView } from './views/MonthView';
 import { WeekView } from './views/WeekView';
 
 export type CalendarViewContentProps = {
   view: CalendarView;
-  /** The focused day for day and week views. */
+  /** The focused date. Which page it lands on depends on the view. */
   date: Date;
-  /** The month the grid shows; only used by the month view. */
-  month?: Date;
-  /** Origin of the pageable month range; only used by the month view. */
   anchor?: Date;
   today?: Date;
   selectedDate?: Date | null;
   events?: readonly CalendarEvent[];
-  onChangeMonth?: (month: Date) => void;
+  onChangeDate?: (pageDate: Date) => void;
   onSelectDay?: (day: Date) => void;
 };
 
-/** The screen no longer scrolls, so day and week views own their scrolling. */
+/** Every view pages the same way; only the page contents differ. */
 export function CalendarViewContent({
   view,
   date,
-  month = date,
-  anchor,
+  anchor = date,
   today,
   selectedDate = null,
   events = [],
-  onChangeMonth,
+  onChangeDate = noop,
   onSelectDay,
 }: CalendarViewContentProps) {
-  if (view === 'month') {
-    return (
-      <MonthPager
-        month={month}
-        anchor={anchor}
-        onChangeMonth={onChangeMonth ?? noop}
-        today={today}
-        selectedDate={selectedDate}
-        events={events}
-        onSelectDay={onSelectDay}
-      />
-    );
-  }
+  const renderPage = useCallback(
+    (pageDate: Date) => {
+      if (view === 'month') {
+        return (
+          <MonthView
+            month={pageDate}
+            today={today}
+            selectedDate={selectedDate}
+            events={events}
+            onSelectDay={onSelectDay}
+          />
+        );
+      }
+
+      // Day and week pages scroll vertically inside the horizontal pager.
+      return (
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {view === 'day' ? (
+            <DayView date={pageDate} today={today} />
+          ) : (
+            <WeekView
+              date={pageDate}
+              today={today}
+              selectedDate={selectedDate}
+              onSelectDay={onSelectDay}
+            />
+          )}
+        </ScrollView>
+      );
+    },
+    [events, onSelectDay, selectedDate, today, view],
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      {view === 'day' ? <DayView date={date} /> : <WeekView date={date} />}
-    </ScrollView>
+    <CalendarPager
+      view={view}
+      date={date}
+      anchor={anchor}
+      onChangeDate={onChangeDate}
+      renderPage={renderPage}
+    />
   );
 }
 

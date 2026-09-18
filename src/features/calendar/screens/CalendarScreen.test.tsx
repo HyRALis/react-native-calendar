@@ -1,13 +1,11 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { CalendarScreen } from './CalendarScreen';
+import type { CalendarView } from '../types';
+import { formatPeriodLabel } from '../utils/calendarLabels';
+import { indexOfDate, pageCount } from '../utils/calendarPaging';
 import { CalendarNavigationProvider, useCalendarActions } from '../navigation';
-import {
-  buildMonthRange,
-  calendarYearRadius,
-  indexOfMonth,
-} from '../utils/monthPaging';
+import { CalendarScreen } from './CalendarScreen';
 
 const today = new Date(2026, 2, 17, 12);
 const pageWidth = 300;
@@ -18,105 +16,9 @@ function monthLabel(year: number, month: number) {
   });
 }
 
-function renderScreen() {
-  render(
-    <CalendarNavigationProvider today={today}>
-      <CalendarScreen />
-    </CalendarNavigationProvider>,
-  );
-  fireEvent(screen.getByTestId('month-pager'), 'layout', {
-    nativeEvent: { layout: { width: pageWidth, height: 600, x: 0, y: 0 } },
-  });
+function periodLabel(view: CalendarView, date: Date) {
+  return formatPeriodLabel(view, date) as string;
 }
-
-/** Derive the page geometry from the range itself rather than a magic number. */
-const pageCount = buildMonthRange(today).length;
-
-function swipeByMonths(delta: number) {
-  const centre = indexOfMonth(today, today);
-  fireEvent(screen.getByTestId('month-pager'), 'momentumScrollEnd', {
-    nativeEvent: {
-      contentOffset: { x: (centre + delta) * pageWidth, y: 0 },
-      layoutMeasurement: { width: pageWidth, height: 600 },
-      contentSize: { width: pageCount * pageWidth, height: 600 },
-    },
-  });
-}
-
-test('the calendar fills the screen with no scrolling heading block', () => {
-  renderScreen();
-  expect(screen.queryByText('Your calendar')).toBeNull();
-  expect(screen.getByTestId('calendar-view-month')).toHaveStyle({ flex: 1 });
-});
-
-test('swiping forward and back moves the visible month', () => {
-  renderScreen();
-  expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
-
-  swipeByMonths(1);
-  expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
-
-  swipeByMonths(-1);
-  expect(screen.getByText(monthLabel(2026, 1))).toBeOnTheScreen();
-});
-
-test('the arrows and the pickers drive the same visible month', () => {
-  renderScreen();
-
-  fireEvent.press(screen.getByRole('button', { name: 'Next month' }));
-  expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
-
-  fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
-  fireEvent.press(screen.getByRole('radio', { name: '2030' }));
-  expect(screen.getByText('2030')).toBeOnTheScreen();
-  expect(screen.getByText(monthLabel(2030, 3))).toBeOnTheScreen();
-
-  fireEvent.press(screen.getByRole('button', { name: 'Today' }));
-  expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
-  expect(screen.getByText('2026')).toBeOnTheScreen();
-});
-
-test('tapping a day outside the month moves to the month it belongs to', () => {
-  renderScreen();
-  // March 2026 trails into April, so April 1 is on the last row.
-  fireEvent.press(
-    screen.getByLabelText(
-      new RegExp(
-        `^${new Date(2026, 3, 1, 12).toLocaleDateString(undefined, {
-          dateStyle: 'full',
-        })}, outside the displayed month`,
-      ),
-    ),
-  );
-  expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
-});
-
-test('with no events the grid shows no event rows or overflow counters', () => {
-  renderScreen();
-  expect(screen.queryByText(/^\+\d+$/)).toBeNull();
-});
-
-test('the furthest selectable year still lands on the month the bar shows', () => {
-  renderScreen();
-  const furthest = today.getFullYear() + calendarYearRadius;
-
-  fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
-  fireEvent.press(screen.getByRole('radio', { name: String(furthest) }));
-  fireEvent.press(
-    screen.getByRole('button', {
-      name: `Select month, ${monthLabel(2026, 2)}`,
-    }),
-  );
-  fireEvent.press(screen.getByRole('radio', { name: monthLabel(2026, 11) }));
-
-  // The screen clamps into the pageable range, so a bar still showing December
-  // of the furthest year proves the range covers whole years. That the grid
-  // scrolled there cannot be asserted here: jest has no real scroll, so a
-  // programmatically targeted page never renders. monthPaging.test.ts covers
-  // the range arithmetic itself.
-  expect(screen.getByText(String(furthest))).toBeOnTheScreen();
-  expect(screen.getByText(monthLabel(furthest, 11))).toBeOnTheScreen();
-});
 
 /** Stands in for the header drawer, which lives in the navigator. */
 function ViewSwitcher() {
@@ -136,16 +38,39 @@ function ViewSwitcher() {
   );
 }
 
-function renderWithSwitcher() {
+function layOutPager(view: CalendarView) {
+  fireEvent(screen.getByTestId(`${view}-pager`), 'layout', {
+    nativeEvent: { layout: { width: pageWidth, height: 600, x: 0, y: 0 } },
+  });
+}
+
+function renderScreen() {
   render(
     <CalendarNavigationProvider today={today}>
       <CalendarScreen />
       <ViewSwitcher />
     </CalendarNavigationProvider>,
   );
-  fireEvent(screen.getByTestId('month-pager'), 'layout', {
-    nativeEvent: { layout: { width: pageWidth, height: 600, x: 0, y: 0 } },
+  layOutPager('month');
+}
+
+/** Swipe `delta` pages in whichever view is showing, from today's page. */
+function swipePages(view: CalendarView, delta: number) {
+  const from = indexOfDate(view, today, today);
+  const count = pageCount(view, today);
+
+  fireEvent(screen.getByTestId(`${view}-pager`), 'momentumScrollEnd', {
+    nativeEvent: {
+      contentOffset: { x: (from + delta) * pageWidth, y: 0 },
+      layoutMeasurement: { width: pageWidth, height: 600 },
+      contentSize: { width: count * pageWidth, height: 600 },
+    },
   });
+}
+
+function showView(view: CalendarView) {
+  fireEvent.press(screen.getByText(`show ${view}`));
+  layOutPager(view);
 }
 
 function weekRowFor(date: Date) {
@@ -156,20 +81,123 @@ function weekRowFor(date: Date) {
   });
 }
 
-describe('views stay on the same date', () => {
-  test('a month reached by swiping is still the month the other views show', () => {
-    renderWithSwitcher();
-    swipeByMonths(1);
+test('the calendar fills the screen with no scrolling heading block', () => {
+  renderScreen();
+  expect(screen.queryByText('Your calendar')).toBeNull();
+  expect(screen.getByTestId('calendar-view-month')).toHaveStyle({ flex: 1 });
+});
 
-    fireEvent.press(screen.getByText('show week'));
-    // April 17, not today: the focused day travelled with the swipe.
+test('with no events the grid shows no event rows or overflow counters', () => {
+  renderScreen();
+  expect(screen.queryByText(/^\+\d+$/)).toBeNull();
+});
+
+describe('every view pages the same way', () => {
+  test('swiping the month grid moves a month at a time', () => {
+    renderScreen();
+    expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
+
+    swipePages('month', 1);
+    expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
+
+    swipePages('month', -1);
+    expect(screen.getByText(monthLabel(2026, 1))).toBeOnTheScreen();
+  });
+
+  test('swiping the week view moves a week, keeping the weekday', () => {
+    renderScreen();
+    showView('week');
+
+    swipePages('week', 1);
+    // 17 March is a Tuesday; one week on is Tuesday 24 March. Only the bar is
+    // asserted: jest has no real scroll, so the page the swipe targeted is not
+    // rendered until the pager remounts. The cross-view tests below cover the
+    // page contents, because switching view does remount it.
+    expect(
+      screen.getByText(periodLabel('week', new Date(2026, 2, 24))),
+    ).toBeOnTheScreen();
+  });
+
+  test('swiping the day view moves a day at a time', () => {
+    renderScreen();
+    showView('day');
+
+    swipePages('day', 1);
+    expect(
+      screen.getByText(periodLabel('day', new Date(2026, 2, 18))),
+    ).toBeOnTheScreen();
+
+    swipePages('day', -2);
+    expect(
+      screen.getByText(periodLabel('day', new Date(2026, 2, 15))),
+    ).toBeOnTheScreen();
+  });
+});
+
+describe('the actions bar drives every view', () => {
+  test.each([
+    ['day', new Date(2026, 2, 18)],
+    ['week', new Date(2026, 2, 24)],
+  ] as const)('the next arrow steps one %s', (view, expected) => {
+    renderScreen();
+    showView(view);
+
+    fireEvent.press(screen.getByRole('button', { name: `Next ${view}` }));
+
+    expect(screen.getByText(periodLabel(view, expected))).toBeOnTheScreen();
+  });
+
+  test('the next arrow steps one month in the month view', () => {
+    renderScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Next month' }));
+    expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
+  });
+
+  test('the pickers and Today work from the day view', () => {
+    renderScreen();
+    showView('day');
+
+    fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
+    fireEvent.press(screen.getByRole('radio', { name: '2030' }));
+    expect(
+      screen.getByText(periodLabel('day', new Date(2030, 2, 17))),
+    ).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Today' }));
+    expect(screen.getByText(periodLabel('day', today))).toBeOnTheScreen();
+  });
+
+  test('the furthest selectable year still lands on the month the bar shows', () => {
+    renderScreen();
+    const furthest = today.getFullYear() + 10;
+
+    fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
+    fireEvent.press(screen.getByRole('radio', { name: String(furthest) }));
+    fireEvent.press(
+      screen.getByRole('button', {
+        name: `Select month, ${monthLabel(2026, 2)}`,
+      }),
+    );
+    fireEvent.press(screen.getByRole('radio', { name: monthLabel(2026, 11) }));
+
+    expect(screen.getByText(String(furthest))).toBeOnTheScreen();
+    expect(screen.getByText(monthLabel(furthest, 11))).toBeOnTheScreen();
+  });
+});
+
+describe('views stay on the same date', () => {
+  test('a month reached by swiping is the month the other views show', () => {
+    renderScreen();
+    swipePages('month', 1);
+
+    showView('week');
     expect(
       screen.getByText(weekRowFor(new Date(2026, 3, 17, 12))),
     ).toBeOnTheScreen();
   });
 
   test('a day tapped in the grid is the day the week view opens on', () => {
-    renderWithSwitcher();
+    renderScreen();
     fireEvent.press(
       screen.getByLabelText(
         new RegExp(
@@ -180,14 +208,14 @@ describe('views stay on the same date', () => {
       ),
     );
 
-    fireEvent.press(screen.getByText('show week'));
+    showView('week');
     expect(
       screen.getByText(weekRowFor(new Date(2026, 2, 26, 12))),
     ).toBeOnTheScreen();
   });
 
   test('a day in a neighbouring month carries the grid there too', () => {
-    renderWithSwitcher();
+    renderScreen();
     fireEvent.press(
       screen.getByLabelText(
         new RegExp(
@@ -198,22 +226,37 @@ describe('views stay on the same date', () => {
       ),
     );
 
-    // The grid follows, because the visible month derives from the focused day.
     expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
+  });
 
-    fireEvent.press(screen.getByText('show week'));
+  test('a day chosen in the week view is where the day view opens', () => {
+    renderScreen();
+    showView('week');
+    fireEvent.press(
+      screen.getByLabelText(
+        new Date(2026, 2, 19, 12).toLocaleDateString(undefined, {
+          dateStyle: 'full',
+        }),
+      ),
+    );
+
+    showView('day');
     expect(
-      screen.getByText(weekRowFor(new Date(2026, 3, 2, 12))),
+      screen.getByText(periodLabel('day', new Date(2026, 2, 19))),
     ).toBeOnTheScreen();
   });
 
-  test('returning to the month view keeps the day reached elsewhere', () => {
-    renderWithSwitcher();
-    fireEvent.press(screen.getByText('show day'));
-    expect(screen.getByTestId('calendar-view-day')).toBeOnTheScreen();
+  test('a round trip through every view keeps the day swiped to', () => {
+    renderScreen();
+    showView('day');
+    swipePages('day', 4);
 
-    fireEvent.press(screen.getByText('show month'));
-    expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
-    expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
+    showView('week');
+    showView('month');
+    showView('day');
+
+    expect(
+      screen.getByText(periodLabel('day', new Date(2026, 2, 21))),
+    ).toBeOnTheScreen();
   });
 });

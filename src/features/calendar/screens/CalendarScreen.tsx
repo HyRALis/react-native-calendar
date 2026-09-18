@@ -14,29 +14,41 @@ export type CalendarScreenProps = {
   events?: readonly CalendarEvent[];
 };
 
+/**
+ * Renders whatever the navigation context is focused on. The screen holds no
+ * date state of its own, so the header drawer, the actions bar, swiping and day
+ * taps all move the same focused date and stay in step across views.
+ */
 export function CalendarScreen({ events = [] }: CalendarScreenProps) {
   const { view, focusedDate, visibleMonth, today, anchor } =
     useCalendarNavigation();
-  const { goToMonth, focusDate } = useCalendarActions();
+  const { goToMonth, goToPage, goToNext, goToPrevious, goToToday, focusDate } =
+    useCalendarActions();
 
   return (
     <View style={styles.screen}>
       <CalendarActionsBar
+        view={view}
         month={visibleMonth}
+        focusedDate={focusedDate}
         anchor={anchor}
         today={today}
         onChangeMonth={goToMonth}
+        onPrevious={goToPrevious}
+        onNext={goToNext}
+        onToday={goToToday}
       />
       <View style={styles.content} testID={`calendar-view-${view}`}>
         <CalendarViewContent
           view={view}
           date={focusedDate}
-          month={visibleMonth}
           anchor={anchor}
           today={today}
           selectedDate={focusedDate}
           events={events}
-          onChangeMonth={goToMonth}
+          onChangeDate={goToPage}
+          // Focusing a day in a neighbouring period moves the pager there too,
+          // because the visible page is derived from the focused date.
           onSelectDay={focusDate}
         />
       </View>

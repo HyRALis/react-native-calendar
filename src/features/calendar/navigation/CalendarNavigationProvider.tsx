@@ -26,6 +26,8 @@ export type CalendarNavigationActions = {
   openWeek: (date: Date) => void;
   openMonth: (date: Date) => void;
   goToMonth: (month: Date) => void;
+  /** Settle on a page of the current view, keeping the rest of the date. */
+  goToPage: (pageDate: Date) => void;
   goToToday: () => void;
   goToNext: () => void;
   goToPrevious: () => void;
@@ -65,6 +67,7 @@ export function CalendarNavigationProvider({
       openWeek: date => dispatch({ type: 'openDate', date, view: 'week' }),
       openMonth: date => dispatch({ type: 'openDate', date, view: 'month' }),
       goToMonth: month => dispatch({ type: 'goToMonth', month }),
+      goToPage: pageDate => dispatch({ type: 'goToPage', pageDate }),
       goToToday: () => dispatch({ type: 'goToToday' }),
       goToNext: () => dispatch({ type: 'step', delta: 1 }),
       goToPrevious: () => dispatch({ type: 'step', delta: -1 }),

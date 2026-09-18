@@ -227,6 +227,25 @@ gesture. Only the wiring needs a render test. Horizontal paging is not operable
 with a screen reader, so any use of this pager must also offer buttons that move
 between pages; the calendar's actions bar provides them.
 
+## One pager for three views
+
+`CalendarPager` wraps `HorizontalPager` and serves the day, week and month
+views alike. `calendarPaging.ts` supplies the arithmetic for whichever unit the
+current view pages over: how many pages there are, which page holds a date, and
+where a page starts.
+
+Pages are addressed by index, not by a materialised array of dates. The day view
+spans several thousand pages over the same range of whole years as the month
+view, and an array of numbers costs a fraction of an array of `Date`s.
+
+The pager is keyed by view, so switching remounts it and a list built for months
+never inherits a week's scroll position.
+
+Each view keeps the part of the date it does not page over — the day-of-month
+when paging months, the day-of-week when paging weeks. Swiping four weeks on
+from a Tuesday lands on a Tuesday, so a later switch to the day view opens
+somewhere deliberate rather than on a Monday.
+
 ## Calendar navigation context
 
 `src/features/calendar/navigation` holds the state every calendar view shares.

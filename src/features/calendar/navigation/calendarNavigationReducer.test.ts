@@ -1,5 +1,5 @@
 import { getWeekDays, isSameDay, isSameMonth } from '../utils/calendarDates';
-import { calendarYearRadius } from '../utils/monthPaging';
+import { calendarYearRadius } from '../utils/calendarPaging';
 import {
   calendarNavigationReducer as reduce,
   createCalendarNavigationState,
@@ -181,5 +181,47 @@ describe('seamless navigation between views', () => {
     );
 
     expect(parts(roundTrip.focusedDate)).toEqual([2026, 4, 21]);
+  });
+});
+
+describe('settling on a page keeps the part of the date the view does not page', () => {
+  test('a month page keeps the day of the month', () => {
+    const state = reduce(initial(), {
+      type: 'goToPage',
+      pageDate: new Date(2026, 7, 1, 12),
+    });
+    expect(parts(state.focusedDate)).toEqual([2026, 7, 17]);
+  });
+
+  test('a week page keeps the day of the week', () => {
+    // 17 March 2026 is a Tuesday; the week of 4 May starts Monday the 4th.
+    const inWeek = reduce(initial(), { type: 'setView', view: 'week' });
+    const state = reduce(inWeek, {
+      type: 'goToPage',
+      pageDate: new Date(2026, 4, 4, 12),
+    });
+    expect(state.focusedDate.getDay()).toBe(2);
+    expect(parts(state.focusedDate)).toEqual([2026, 4, 5]);
+  });
+
+  test('a day page is the day itself', () => {
+    const inDay = reduce(initial(), { type: 'setView', view: 'day' });
+    const state = reduce(inDay, {
+      type: 'goToPage',
+      pageDate: new Date(2026, 4, 21, 12),
+    });
+    expect(parts(state.focusedDate)).toEqual([2026, 4, 21]);
+  });
+
+  test('paging weeks repeatedly never drifts off the weekday', () => {
+    const inWeek = reduce(initial(), { type: 'setView', view: 'week' });
+    let state = inWeek;
+
+    for (let page = 0; page < 8; page++) {
+      state = reduce(state, { type: 'step', delta: 1 });
+    }
+
+    expect(state.focusedDate.getDay()).toBe(inWeek.focusedDate.getDay());
+    expect(parts(state.focusedDate)).toEqual([2026, 4, 12]);
   });
 });

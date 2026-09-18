@@ -9,8 +9,17 @@ export function addDays(date: Date, days: number): Date {
 }
 
 /** Weeks start on Monday. */
+export function startOfWeek(date: Date): Date {
+  return addDays(date, -((date.getDay() + 6) % 7));
+}
+
+/** Which weekday a date falls on, 0 for Monday through 6 for Sunday. */
+export function dayOfWeekIndex(date: Date): number {
+  return (date.getDay() + 6) % 7;
+}
+
 export function getWeekDays(date: Date): Date[] {
-  const monday = addDays(date, -((date.getDay() + 6) % 7));
+  const monday = startOfWeek(date);
 
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
 }
@@ -74,5 +83,15 @@ export function sameDayInMonth(month: Date, day: Date): Date {
     month.getMonth(),
     Math.min(day.getDate(), getDaysInMonth(month)),
     12,
+  );
+}
+
+/** Whole days from `from` to `to`, negative when `to` is earlier. Both are
+ * read at midday first, so daylight-saving shifts cannot round the result off. */
+export function differenceInDays(from: Date, to: Date): number {
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  return Math.round(
+    (atMidday(to).getTime() - atMidday(from).getTime()) / dayMs,
   );
 }
