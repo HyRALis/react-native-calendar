@@ -1,6 +1,8 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { CalendarScreen } from './CalendarScreen';
+import { CalendarNavigationProvider, useCalendarActions } from '../navigation';
 import {
   buildMonthRange,
   calendarYearRadius,
@@ -17,7 +19,11 @@ function monthLabel(year: number, month: number) {
 }
 
 function renderScreen() {
-  render(<CalendarScreen today={today} />);
+  render(
+    <CalendarNavigationProvider today={today}>
+      <CalendarScreen />
+    </CalendarNavigationProvider>,
+  );
   fireEvent(screen.getByTestId('month-pager'), 'layout', {
     nativeEvent: { layout: { width: pageWidth, height: 600, x: 0, y: 0 } },
   });
@@ -110,4 +116,104 @@ test('the furthest selectable year still lands on the month the bar shows', () =
   // the range arithmetic itself.
   expect(screen.getByText(String(furthest))).toBeOnTheScreen();
   expect(screen.getByText(monthLabel(furthest, 11))).toBeOnTheScreen();
+});
+
+/** Stands in for the header drawer, which lives in the navigator. */
+function ViewSwitcher() {
+  const { setView } = useCalendarActions();
+  return (
+    <>
+      {(['day', 'week', 'month'] as const).map(view => (
+        <Text
+          key={view}
+          accessibilityRole="button"
+          onPress={() => setView(view)}
+        >
+          {`show ${view}`}
+        </Text>
+      ))}
+    </>
+  );
+}
+
+function renderWithSwitcher() {
+  render(
+    <CalendarNavigationProvider today={today}>
+      <CalendarScreen />
+      <ViewSwitcher />
+    </CalendarNavigationProvider>,
+  );
+  fireEvent(screen.getByTestId('month-pager'), 'layout', {
+    nativeEvent: { layout: { width: pageWidth, height: 600, x: 0, y: 0 } },
+  });
+}
+
+function weekRowFor(date: Date) {
+  return date.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+describe('views stay on the same date', () => {
+  test('a month reached by swiping is still the month the other views show', () => {
+    renderWithSwitcher();
+    swipeByMonths(1);
+
+    fireEvent.press(screen.getByText('show week'));
+    // April 17, not today: the focused day travelled with the swipe.
+    expect(
+      screen.getByText(weekRowFor(new Date(2026, 3, 17, 12))),
+    ).toBeOnTheScreen();
+  });
+
+  test('a day tapped in the grid is the day the week view opens on', () => {
+    renderWithSwitcher();
+    fireEvent.press(
+      screen.getByLabelText(
+        new RegExp(
+          `^${new Date(2026, 2, 26, 12).toLocaleDateString(undefined, {
+            dateStyle: 'full',
+          })}, `,
+        ),
+      ),
+    );
+
+    fireEvent.press(screen.getByText('show week'));
+    expect(
+      screen.getByText(weekRowFor(new Date(2026, 2, 26, 12))),
+    ).toBeOnTheScreen();
+  });
+
+  test('a day in a neighbouring month carries the grid there too', () => {
+    renderWithSwitcher();
+    fireEvent.press(
+      screen.getByLabelText(
+        new RegExp(
+          `^${new Date(2026, 3, 2, 12).toLocaleDateString(undefined, {
+            dateStyle: 'full',
+          })}, outside the displayed month`,
+        ),
+      ),
+    );
+
+    // The grid follows, because the visible month derives from the focused day.
+    expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByText('show week'));
+    expect(
+      screen.getByText(weekRowFor(new Date(2026, 3, 2, 12))),
+    ).toBeOnTheScreen();
+  });
+
+  test('returning to the month view keeps the day reached elsewhere', () => {
+    renderWithSwitcher();
+    fireEvent.press(screen.getByText('show day'));
+    expect(screen.getByTestId('calendar-view-day')).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByText('show month'));
+    expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
+    expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
+  });
 });

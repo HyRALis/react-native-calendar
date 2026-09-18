@@ -3,7 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CalendarScreen } from '../../features/calendar/screens/CalendarScreen';
 import { CalendarDrawer } from '../../features/calendar/components/CalendarDrawer';
-import type { CalendarView } from '../../features/calendar/types';
+import {
+  CalendarNavigationProvider,
+  useCalendarActions,
+  useCalendarNavigation,
+} from '../../features/calendar/navigation';
 import { ProfileScreen } from '../../features/profile/screens/ProfileScreen';
 import { PageHeader } from '../../shared/components/molecules/PageHeader';
 import { colors } from '../../shared/theme';
@@ -12,16 +16,29 @@ type MainRoutes = { Calendar: undefined; Profile: undefined };
 const Tabs = createBottomTabNavigator<MainRoutes>();
 
 function CalendarIcon({ color }: { color: string }) {
-  return <Text style={[styles.icon, { color }]}>{'\u25a6'}</Text>;
+  return <Text style={[styles.icon, { color }]}>{'▦'}</Text>;
 }
 
 function ProfileIcon({ color }: { color: string }) {
-  return <Text style={[styles.icon, { color }]}>{'\u25cb'}</Text>;
+  return <Text style={[styles.icon, { color }]}>{'○'}</Text>;
 }
 
-/** View preference is local to the signed-in session, shared by the header and screen. */
+function renderCalendarScreen() {
+  return <CalendarScreen />;
+}
+
+/** The provider unmounts with the tabs, so logout clears the session's view. */
 export function MainNavigator() {
-  const [calendarView, setCalendarView] = useState<CalendarView>('month');
+  return (
+    <CalendarNavigationProvider>
+      <MainTabs />
+    </CalendarNavigationProvider>
+  );
+}
+
+function MainTabs() {
+  const { view } = useCalendarNavigation();
+  const { setView } = useCalendarActions();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -39,10 +56,10 @@ export function MainNavigator() {
               />
               <CalendarDrawer
                 visible={menuOpen && navigation.isFocused()}
-                selectedView={calendarView}
+                selectedView={view}
                 onClose={() => setMenuOpen(false)}
-                onSelectView={view => {
-                  setCalendarView(view);
+                onSelectView={next => {
+                  setView(next);
                   setMenuOpen(false);
                   navigation.navigate('Calendar');
                 }}
@@ -58,7 +75,7 @@ export function MainNavigator() {
             tabBarAccessibilityLabel: 'Calendar',
           }}
         >
-          {() => <CalendarScreen view={calendarView} />}
+          {renderCalendarScreen}
         </Tabs.Screen>
         <Tabs.Screen
           name="Profile"

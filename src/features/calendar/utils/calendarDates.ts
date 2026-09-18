@@ -59,3 +59,20 @@ export function differenceInMonths(from: Date, to: Date): number {
     (to.getMonth() - from.getMonth())
   );
 }
+
+export function atMidday(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+}
+
+export function getDaysInMonth(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 12).getDate();
+}
+
+export function sameDayInMonth(month: Date, day: Date): Date {
+  return new Date(
+    month.getFullYear(),
+    month.getMonth(),
+    Math.min(day.getDate(), getDaysInMonth(month)),
+    12,
+  );
+}

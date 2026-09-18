@@ -226,3 +226,35 @@ layout pass and overscroll past either end — instead of through a simulated
 gesture. Only the wiring needs a render test. Horizontal paging is not operable
 with a screen reader, so any use of this pager must also offer buttons that move
 between pages; the calendar's actions bar provides them.
+
+## Calendar navigation context
+
+`src/features/calendar/navigation` holds the state every calendar view shares.
+It is a feature context, not a UI component, so the shared library stays free of
+calendar vocabulary.
+
+The state is deliberately small: **one `focusedDate` and one `view`**. Each view
+derives what it renders from that single date — the month containing it, the
+week containing it, or the day itself — so no two views can hold conflicting
+ideas of where you are. Switching view changes only `view`, which is why
+month → day → week keeps the same day without any handover code.
+
+```tsx
+const { view, focusedDate, visibleMonth, visibleWeek, today } =
+  useCalendarNavigation();
+const { openDay, setView, goToMonth, goToNext } = useCalendarActions();
+```
+
+State and actions are separate contexts. The actions object is built once from a
+stable `dispatch`, so a component that only navigates never re-renders when the
+date changes, and `useCallback` dependencies on an action stay honest.
+
+All the logic lives in `calendarNavigationReducer.ts` as a pure reducer, unit
+tested without rendering: step size per view (a day, a week, a month), keeping
+the day-of-month when paging (31 January steps to 28 February, never skipping
+the month), clamping to the reachable range, and returning the identical state
+object when an action changes nothing.
+
+Leaf components stay prop-driven. `CalendarActionsBar`, `MonthView` and
+`MonthDayCell` take plain props and are connected at `CalendarScreen`, so they
+remain reusable and testable without a provider.

@@ -1,4 +1,11 @@
-import { addMonths, differenceInMonths, startOfMonth } from './calendarDates';
+import {
+  addMonths,
+  atMidday,
+  differenceInMonths,
+  isSameMonth,
+  sameDayInMonth,
+  startOfMonth,
+} from './calendarDates';
 
 /**
  * How many years either side of the anchor the calendar can reach. The pager
@@ -68,4 +75,17 @@ export function clampMonthToRange(
   return index > lastIndex
     ? monthAtIndex(anchor, lastIndex, yearRadius)
     : startOfMonth(month);
+}
+
+/** Like `clampMonthToRange`, but keeps the day-of-month. */
+export function clampDateToRange(
+  anchor: Date,
+  date: Date,
+  yearRadius: number = calendarYearRadius,
+): Date {
+  const month = clampMonthToRange(anchor, date, yearRadius);
+
+  return isSameMonth(month, date)
+    ? atMidday(date)
+    : sameDayInMonth(month, date);
 }
