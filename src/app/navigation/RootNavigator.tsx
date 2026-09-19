@@ -10,8 +10,8 @@ import { StatusScreen } from '../../shared/components';
 import { colors } from '../../shared/theme';
 import { MainNavigator } from './MainNavigator';
 
-type AuthRoutes = { SignIn: undefined; SignUp: undefined };
-const AuthStack = createNativeStackNavigator<AuthRoutes>();
+type RootRoutes = { SignIn: undefined; SignUp: undefined; Main: undefined };
+const RootStack = createNativeStackNavigator<RootRoutes>();
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -24,16 +24,28 @@ const theme = {
   },
 };
 
-function SignIn({ navigation }: NativeStackScreenProps<AuthRoutes, 'SignIn'>) {
+function SignIn({ navigation }: NativeStackScreenProps<RootRoutes, 'SignIn'>) {
   return (
     <AuthScreen mode="signIn" onSwitch={() => navigation.replace('SignUp')} />
   );
 }
-function SignUp({ navigation }: NativeStackScreenProps<AuthRoutes, 'SignUp'>) {
+function SignUp({ navigation }: NativeStackScreenProps<RootRoutes, 'SignUp'>) {
   return (
     <AuthScreen mode="signUp" onSwitch={() => navigation.replace('SignIn')} />
   );
 }
+/**
+ * Keyed by account, so a session that changes hands starts the calendar over
+ * instead of inheriting the previous user's view.
+ */
+function MainRoute() {
+  const { state } = useAuth();
+
+  return (
+    <MainNavigator key={state.status === 'signedIn' ? state.user.id : 'none'} />
+  );
+}
+
 export function RootNavigator() {
   const { state, retry } = useAuth();
   if (state.status === 'loading') {
@@ -48,17 +60,26 @@ export function RootNavigator() {
       />
     );
   }
-  // Replacing the entire tree removes private navigation history on logout.
+  // One stack holds both halves of the app, so signing in and out crossfades
+  // rather than snapping. Screens for the half you are not in are absent from
+  // the navigator entirely, which is what removes private navigation history
+  // on logout — the same guarantee the previous whole-tree swap gave.
   return (
     <NavigationContainer theme={theme}>
-      {state.status === 'signedIn' ? (
-        <MainNavigator key={state.user.id} />
-      ) : (
-        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-          <AuthStack.Screen name="SignIn" component={SignIn} />
-          <AuthStack.Screen name="SignUp" component={SignUp} />
-        </AuthStack.Navigator>
-      )}
+      <RootStack.Navigator
+        screenOptions={{ headerShown: false, animation: 'fade' }}
+      >
+        {state.status === 'signedIn' ? (
+          <RootStack.Screen name="Main" component={MainRoute} />
+        ) : (
+          // Signing in and signing up are the same form in two modes, so they
+          // crossfade too rather than sliding as though one followed the other.
+          <>
+            <RootStack.Screen name="SignIn" component={SignIn} />
+            <RootStack.Screen name="SignUp" component={SignUp} />
+          </>
+        )}
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }

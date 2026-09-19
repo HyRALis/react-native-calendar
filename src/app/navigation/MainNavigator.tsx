@@ -47,6 +47,10 @@ function MainTabs() {
         screenOptions={({ navigation, route }) => ({
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.muted,
+          // Crossfade rather than shift: the calendar already uses horizontal
+          // motion to mean "another month", and a sliding tab change would
+          // borrow that meaning for something else.
+          animation: 'fade',
           header: () => (
             <>
               <PageHeader
