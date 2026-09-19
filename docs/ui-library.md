@@ -11,19 +11,24 @@ src/shared/
   theme.ts                    Colors, spacing, radii, typography, control sizes
   utils/
     paging.ts                 Pure scroll-offset to page-index maths
+  storage/
+    appStorage.ts             Plain key/value device storage
+    secureStorage.ts          Keychain-backed storage for secrets
   components/
     index.ts                  Public component and prop-type exports
     atoms/
       Typography.tsx          Text styles and semantic tones
       Button.tsx              Actions, variants, sizes, pending state
       IconButton.tsx          Square glyph-only tap target for compact actions
+      FloatingActionButton.tsx  Round primary action pinned to a corner
       TextInput.tsx           Input, focus feedback, invalid/disabled states
       Checkbox.tsx            Controlled boolean selection
       Switch.tsx              Controlled native toggle
     molecules/
+      BottomSheet.tsx         Content-height modal panel with scrim and safe area
       FormField.tsx           Label + TextInput + helper/error text
       HorizontalPager.tsx     Controlled snap-to-page horizontal list
-      OptionPicker.tsx        Modal single-choice list, generic over its value
+      OptionPicker.tsx        Single-choice list in a bottom sheet
       PageHeader.tsx          Safe-area page title + hamburger menu action
     organisms/
       StatusScreen.tsx        Loading, message, and retry composition
@@ -41,15 +46,17 @@ relative path. The old `components/Button`, `components/FormField`, and
 
 ## Component API
 
-| Component      | Main props                                                                | Behavior                                                                                   |
-| -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `Typography`   | `variant`, `tone`, native text props                                      | Defaults to body text; caller styles apply last.                                           |
-| `Button`       | `title`, `variant`, `size`, `loading`, `disabled`, native pressable props | Keeps its title while loading; prevents presses and announces busy/disabled state.         |
-| `TextInput`    | Native input props, `invalid`, `disabled`                                 | Forwards native ref and events; adds focus, invalid, read-only, and multiline styling.     |
-| `Checkbox`     | `checked`, `onValueChange`, required `accessibilityLabel`                 | Controlled value; exposes checkbox role and checked/disabled state.                        |
-| `Switch`       | `value`, `onValueChange`, required `accessibilityLabel`                   | Wraps the native switch with theme colors and controlled state.                            |
-| `FormField`    | `label`, `helperText`, `error`, `required`, all UI input props            | Errors replace helper text. `style` targets the input; `containerStyle` targets the field. |
-| `StatusScreen` | `title`, `message`, `loading`, `onRetry`                                  | Displays a status and optional retry action, disabled while loading.                       |
+| Component              | Main props                                                                | Behavior                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `Typography`           | `variant`, `tone`, native text props                                      | Defaults to body text; caller styles apply last.                                           |
+| `Button`               | `title`, `variant`, `size`, `loading`, `disabled`, native pressable props | Keeps its title while loading; prevents presses and announces busy/disabled state.         |
+| `TextInput`            | Native input props, `invalid`, `disabled`                                 | Forwards native ref and events; adds focus, invalid, read-only, and multiline styling.     |
+| `Checkbox`             | `checked`, `onValueChange`, required `accessibilityLabel`                 | Controlled value; exposes checkbox role and checked/disabled state.                        |
+| `Switch`               | `value`, `onValueChange`, required `accessibilityLabel`                   | Wraps the native switch with theme colors and controlled state.                            |
+| `FormField`            | `label`, `helperText`, `error`, `required`, all UI input props            | Errors replace helper text. `style` targets the input; `containerStyle` targets the field. |
+| `BottomSheet`          | `visible`, `title`, `children`, `onClose`, `dismissLabel`                 | Renders nothing while hidden. Owns the scrim, safe area, and every way out.                |
+| `FloatingActionButton` | `glyph`, required `accessibilityLabel`, `size`, pressable props           | Absolutely positioned bottom-right of its parent; the glyph stays out of accessibility.    |
+| `StatusScreen`         | `title`, `message`, `loading`, `onRetry`                                  | Displays a status and optional retry action, disabled while loading.                       |
 
 Every component exports its props type. All atoms and `FormField` forward refs to
 their underlying native control. Native properties such as `testID`,
@@ -176,6 +183,41 @@ The checkbox has a minimum 44-by-44 touch target. Switch appearance and dimensio
 follow the native platform. Visible labels in this basic composition are text;
 only the control is interactive.
 
+### Bottom sheets
+
+`BottomSheet` is the one modal panel in the library. It rises from the bottom
+edge, is only as tall as its content up to 90% of the screen, and closes from
+the backdrop, Android back, and the accessibility escape. The title is announced
+as a heading; the backdrop is a labelled button so a screen reader has a way out
+that is not a gesture. `OptionPicker` is a bottom sheet with a radio list in it.
+
+Content taller than the cap needs a scrolling child with `flexShrink: 1`; the
+sheet caps its own height but does not scroll for you. Text inputs are lifted
+above the keyboard on iOS.
+
+```tsx
+{
+  editing ? (
+    <BottomSheet visible title="Add event" onClose={cancel}>
+      <FormField label="Title" value={title} onChangeText={setTitle} />
+      <Button title="Save event" onPress={save} />
+    </BottomSheet>
+  ) : null;
+}
+```
+
+Mounting the sheet only while it is open, as above, is worth doing whenever it
+holds a draft: the state inside starts fresh on every visit and nothing has to
+be reset on the way out.
+
+### Floating actions
+
+`FloatingActionButton` positions itself absolutely at the bottom-right of its
+parent, so a screen that ends where the tab bar begins already clears the tabs
+without measuring anything. It needs an `accessibilityLabel` because its glyph
+is decorative and hidden. A floating button hides content underneath it, so keep
+it to one primary action per screen.
+
 ### Page headers
 
 `PageHeader` accepts `title`, `onMenuPress`, and optional `menuOpen`. It handles
@@ -277,3 +319,85 @@ object when an action changes nothing.
 Leaf components stay prop-driven. `CalendarActionsBar`, `MonthView` and
 `MonthDayCell` take plain props and are connected at `CalendarScreen`, so they
 remain reusable and testable without a provider.
+
+## Adding an event
+
+The `+` button on the calendar opens `AddEventSheet`, a `BottomSheet` holding
+the start, the end, a title and a description. It is mounted only while open,
+so each visit starts from a blank draft.
+
+Every rule about a draft lives in `utils/eventDraft.ts` as pure functions, unit
+tested without rendering: where a new draft starts (the next free slot on the
+focused day, not on today), that moving the start carries the end along so the
+duration is kept, that a title is required and the end must come after the
+start, and that a stored event is trimmed with an empty description left off.
+The sheet shows errors only after the first attempt to save, so an empty form
+opens without anything already marked wrong.
+
+`DateTimeField` splits one moment across two tap targets. The day opens
+`DatePickerSheet`, a compact month grid; the time opens an `OptionPicker` of
+quarter-hour slots, with an off-grid time inserted in order so the list is
+never left with nothing selected. Neither half asks the user to type a date, and
+each is a separately labelled button — "Starts date", "Starts time" — so a
+screen reader names the half it is on.
+
+Created events live in `useCalendarEvents`, backed by the device repository below.
+It is a hook rather than a context because only `CalendarScreen` reads it.
+Month, week, and day views receive the same events through props. The shared
+`eventsForDay` function includes every event overlapping a local day, sorts by
+start time, and treats the end as exclusive: an event ending at midnight does
+not appear on the following day.
+
+Day shows every event in a scrolling agenda with wrapping titles. Week groups
+the same event rows by day. Month uses compact titles and a `+N` overflow count.
+Tapping a date or overflow opens that day; tapping an event opens
+`EventDetailsSheet` with its full title, start, end, and description. Event and
+date controls are separate siblings so screen readers can reach both actions.
+The detail sheet reuses `BottomSheet` and keeps long content scrollable.
+
+### Nothing in the past
+
+An event cannot start before the moment the form was opened. The rule is
+enforced twice, on purpose. `DateTimeField` takes a `min`, which greys out
+earlier days in the grid and drops earlier slots from the time list, so most of
+the past is simply unreachable. `validateEventDraft` then checks the instant
+itself, because a route around the pickers remains: choose a later day, set an
+early morning time, then come back to today — the time travels with the day.
+The start field floors at now; the end field floors at the start.
+
+The clock is read once each time the sheet opens, through `CalendarScreen`'s
+injectable `getNow` function. It is independent of the navigation context's
+initial clock, so reopening the form after a long session uses the current time.
+A draft does not expire underneath someone who is still typing. Opening on a day
+that has already passed starts the draft now rather than handing back something
+already invalid.
+
+## Keeping events on the device
+
+Events persist through `@react-native-async-storage/async-storage`, the app's
+equivalent of the web's localStorage. It is the one new runtime dependency the
+calendar has needed, and it is named in a single file — `shared/storage/appStorage.ts`
+— behind a two-method `KeyValueStorage` type. Secrets do not go here; they keep
+going through `secureStorage`, which is backed by the keychain.
+
+`eventStore.ts` turns that key/value pair into `load` and `save`. JSON has no
+date type, so events are written with ISO strings and read back as `Date`s.
+Reading is deliberately forgiving: a half-written value, a value from an older
+shape, or one record with an unreadable date costs that record and nothing
+else. One bad entry can neither empty the calendar nor stop the app starting.
+
+`useCalendarEvents` hydrates on mount, merges additions made during loading, and
+writes the whole list back in a serialized queue. An earlier write cannot finish
+after a later snapshot and erase newer events. Repository changes isolate the
+event lists and ignore late responses. Two failure rules are worth knowing:
+
+- A **read** that fails turns writing off until a successful retry. A failed read is no
+  proof the device is empty, and writing anyway would overwrite events that are
+  still there.
+- A **write** that fails preserves the in-memory events and reports the error.
+  The calendar offers a retry that merges stored and pending events by ID before
+  saving again. Storage failures are never presented as successful persistence.
+
+The store is a parameter with a device-backed default, so `CalendarScreen`
+takes an `eventStore` prop and every test runs against a store of its own
+rather than a shared module singleton.

@@ -16,6 +16,7 @@ export type MonthDayCellProps = {
   isSelected?: boolean;
   maxEventRows?: number;
   onPress?: (day: Date) => void;
+  onSelectEvent?: (event: CalendarEvent) => void;
 };
 
 function describe(
@@ -42,22 +43,28 @@ export function MonthDayCell({
   isSelected = false,
   maxEventRows = 3,
   onPress,
+  onSelectEvent,
 }: MonthDayCellProps) {
   const { visible, overflowCount } = summarizeDayEvents(events, maxEventRows);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={describe(day, inCurrentMonth, isToday, events.length)}
-      onPress={() => onPress?.(day)}
-      style={({ pressed }) => [
-        styles.cell,
-        isSelected && styles.selected,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.header}>
+    <View style={[styles.cell, isSelected && styles.selected]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={describe(
+          day,
+          inCurrentMonth,
+          isToday,
+          events.length,
+        )}
+        onPress={() => onPress?.(day)}
+        style={({ pressed }) => [
+          StyleSheet.absoluteFill,
+          pressed && styles.pressed,
+        ]}
+      />
+      <View style={styles.header} pointerEvents="none">
         <View style={[styles.dateBadge, isToday && styles.todayBadge]}>
           <Typography
             variant={isToday ? 'bodyStrong' : 'body'}
@@ -68,33 +75,50 @@ export function MonthDayCell({
           </Typography>
         </View>
       </View>
-      <View style={styles.body} accessible={false}>
+      <View style={styles.body} pointerEvents="box-none">
         {visible.map(event => (
-          <Typography
+          <Pressable
             key={event.id}
-            variant="overline"
-            tone={inCurrentMonth ? 'default' : 'muted'}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={styles.event}
-            accessible={false}
+            accessibilityRole="button"
+            accessibilityLabel={`${event.title}, ${formatEventTime(
+              event.start,
+            )}`}
+            accessibilityHint="Opens event details"
+            onPress={() => onSelectEvent?.(event)}
+            style={({ pressed }) => pressed && styles.pressed}
           >
-            {`${formatEventTime(event.start)} ${event.title}`}
-          </Typography>
+            <Typography
+              variant="overline"
+              tone={inCurrentMonth ? 'default' : 'muted'}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.event}
+              accessible={false}
+            >
+              {event.title}
+            </Typography>
+          </Pressable>
         ))}
         {overflowCount > 0 ? (
-          <Typography
-            variant="overline"
-            tone="primary"
-            numberOfLines={1}
-            style={styles.overflow}
-            accessible={false}
-          >
-            {`+${overflowCount}`}
-          </Typography>
+          <Pressable onPress={() => onPress?.(day)} accessible={false}>
+            <Typography
+              variant="overline"
+              tone="primary"
+              numberOfLines={1}
+              style={styles.overflow}
+              accessible={false}
+            >
+              {`+${overflowCount}`}
+            </Typography>
+          </Pressable>
         ) : null}
+        <Pressable
+          style={styles.emptySpace}
+          onPress={() => onPress?.(day)}
+          accessible={false}
+        />
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -118,6 +142,7 @@ const styles = StyleSheet.create({
   },
   todayBadge: { backgroundColor: colors.primary },
   body: { flex: 1, gap: 1 },
+  emptySpace: { flex: 1 },
   event: {
     letterSpacing: 0,
     paddingHorizontal: 2,

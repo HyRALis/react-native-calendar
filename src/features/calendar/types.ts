@@ -18,4 +18,5 @@ export type CalendarEvent = {
   title: string;
   start: Date;
   end?: Date;
+  description?: string;
 };

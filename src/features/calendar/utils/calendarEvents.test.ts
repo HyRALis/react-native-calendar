@@ -27,6 +27,17 @@ test('eventsForDay honours the empty default', () => {
   expect(eventsForDay([], day)).toEqual([]);
 });
 
+test('an overnight event appears on every overlapping day, excluding its midnight end', () => {
+  const overnight = {
+    ...event('overnight', 23, 16),
+    end: new Date(2026, 2, 19),
+  };
+  expect(eventsForDay([overnight], new Date(2026, 2, 16))).toEqual([overnight]);
+  expect(eventsForDay([overnight], day)).toEqual([overnight]);
+  expect(eventsForDay([overnight], new Date(2026, 2, 18))).toEqual([overnight]);
+  expect(eventsForDay([overnight], new Date(2026, 2, 19))).toEqual([]);
+});
+
 test.each([
   [0, 0, 0],
   [1, 1, 0],

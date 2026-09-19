@@ -1,10 +1,18 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import type { CalendarView } from '../types';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
+import type { CalendarEvent, CalendarView } from '../types';
+import { formatEventDateTime } from '../utils/calendarEvents';
 import { formatPeriodLabel } from '../utils/calendarLabels';
 import { indexOfDate, pageCount } from '../utils/calendarPaging';
 import { CalendarNavigationProvider, useCalendarActions } from '../navigation';
+import { createEventStore } from '../storage/eventStore';
 import { CalendarScreen } from './CalendarScreen';
 
 const today = new Date(2026, 2, 17, 12);
@@ -44,13 +52,27 @@ function layOutPager(view: CalendarView) {
   });
 }
 
-function renderScreen() {
+/** A store of its own per render, so no test inherits another's events. */
+function memoryStore() {
+  const values = new Map<string, string>();
+
+  return createEventStore({
+    getItem: async key => values.get(key) ?? null,
+    setItem: async (key, value) => {
+      values.set(key, value);
+    },
+  });
+}
+
+async function renderScreen(store = memoryStore(), getNow = () => today) {
   render(
     <CalendarNavigationProvider today={today}>
-      <CalendarScreen />
+      <CalendarScreen eventStore={store} getNow={getNow} />
       <ViewSwitcher />
     </CalendarNavigationProvider>,
   );
+  // Events stored on the device load asynchronously; settle that first.
+  await act(async () => {});
   layOutPager('month');
 }
 
@@ -81,20 +103,20 @@ function weekRowFor(date: Date) {
   });
 }
 
-test('the calendar fills the screen with no scrolling heading block', () => {
-  renderScreen();
+test('the calendar fills the screen with no scrolling heading block', async () => {
+  await renderScreen();
   expect(screen.queryByText('Your calendar')).toBeNull();
   expect(screen.getByTestId('calendar-view-month')).toHaveStyle({ flex: 1 });
 });
 
-test('with no events the grid shows no event rows or overflow counters', () => {
-  renderScreen();
+test('with no events the grid shows no event rows or overflow counters', async () => {
+  await renderScreen();
   expect(screen.queryByText(/^\+\d+$/)).toBeNull();
 });
 
 describe('every view pages the same way', () => {
-  test('swiping the month grid moves a month at a time', () => {
-    renderScreen();
+  test('swiping the month grid moves a month at a time', async () => {
+    await renderScreen();
     expect(screen.getByText(monthLabel(2026, 2))).toBeOnTheScreen();
 
     swipePages('month', 1);
@@ -104,8 +126,8 @@ describe('every view pages the same way', () => {
     expect(screen.getByText(monthLabel(2026, 1))).toBeOnTheScreen();
   });
 
-  test('swiping the week view moves a week, keeping the weekday', () => {
-    renderScreen();
+  test('swiping the week view moves a week, keeping the weekday', async () => {
+    await renderScreen();
     showView('week');
 
     swipePages('week', 1);
@@ -118,8 +140,8 @@ describe('every view pages the same way', () => {
     ).toBeOnTheScreen();
   });
 
-  test('swiping the day view moves a day at a time', () => {
-    renderScreen();
+  test('swiping the day view moves a day at a time', async () => {
+    await renderScreen();
     showView('day');
 
     swipePages('day', 1);
@@ -138,8 +160,8 @@ describe('the actions bar drives every view', () => {
   test.each([
     ['day', new Date(2026, 2, 18)],
     ['week', new Date(2026, 2, 24)],
-  ] as const)('the next arrow steps one %s', (view, expected) => {
-    renderScreen();
+  ] as const)('the next arrow steps one %s', async (view, expected) => {
+    await renderScreen();
     showView(view);
 
     fireEvent.press(screen.getByRole('button', { name: `Next ${view}` }));
@@ -147,14 +169,14 @@ describe('the actions bar drives every view', () => {
     expect(screen.getByText(periodLabel(view, expected))).toBeOnTheScreen();
   });
 
-  test('the next arrow steps one month in the month view', () => {
-    renderScreen();
+  test('the next arrow steps one month in the month view', async () => {
+    await renderScreen();
     fireEvent.press(screen.getByRole('button', { name: 'Next month' }));
     expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
   });
 
-  test('the pickers and Today work from the day view', () => {
-    renderScreen();
+  test('the pickers and Today work from the day view', async () => {
+    await renderScreen();
     showView('day');
 
     fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
@@ -167,8 +189,8 @@ describe('the actions bar drives every view', () => {
     expect(screen.getByText(periodLabel('day', today))).toBeOnTheScreen();
   });
 
-  test('the furthest selectable year still lands on the month the bar shows', () => {
-    renderScreen();
+  test('the furthest selectable year still lands on the month the bar shows', async () => {
+    await renderScreen();
     const furthest = today.getFullYear() + 10;
 
     fireEvent.press(screen.getByRole('button', { name: 'Select year, 2026' }));
@@ -185,9 +207,59 @@ describe('the actions bar drives every view', () => {
   });
 });
 
+describe('adding an event', () => {
+  test('the floating button opens the add event sheet', async () => {
+    await renderScreen();
+    expect(screen.queryByRole('header', { name: 'Add event' })).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+
+    expect(screen.getByRole('header', { name: 'Add event' })).toBeOnTheScreen();
+  });
+
+  test('an event saved in the sheet shows up in the grid', async () => {
+    await renderScreen();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
+    fireEvent.press(screen.getByRole('button', { name: 'Save event' }));
+
+    expect(screen.queryByRole('header', { name: 'Add event' })).toBeNull();
+    // The draft defaults to the focused day, which March's grid already shows.
+    expect(screen.getByText(/Standup$/)).toBeOnTheScreen();
+  });
+
+  test('an event saved in one session is still there in the next', async () => {
+    const store = memoryStore();
+    await renderScreen(store);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
+    fireEvent.press(screen.getByRole('button', { name: 'Save event' }));
+    // Let the write reach the device before the session ends.
+    await act(async () => {});
+    screen.unmount();
+
+    await renderScreen(store);
+
+    expect(screen.getByText(/Standup$/)).toBeOnTheScreen();
+  });
+
+  test('cancelling leaves the grid empty', async () => {
+    await renderScreen();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('header', { name: 'Add event' })).toBeNull();
+    expect(screen.queryByText(/Standup$/)).toBeNull();
+  });
+});
+
 describe('views stay on the same date', () => {
-  test('a month reached by swiping is the month the other views show', () => {
-    renderScreen();
+  test('a month reached by swiping is the month the other views show', async () => {
+    await renderScreen();
     swipePages('month', 1);
 
     showView('week');
@@ -196,8 +268,8 @@ describe('views stay on the same date', () => {
     ).toBeOnTheScreen();
   });
 
-  test('a day tapped in the grid is the day the week view opens on', () => {
-    renderScreen();
+  test('a day tapped in the grid is the day the week view opens on', async () => {
+    await renderScreen();
     fireEvent.press(
       screen.getByLabelText(
         new RegExp(
@@ -214,8 +286,8 @@ describe('views stay on the same date', () => {
     ).toBeOnTheScreen();
   });
 
-  test('a day in a neighbouring month carries the grid there too', () => {
-    renderScreen();
+  test('a day in a neighbouring month opens that day immediately', async () => {
+    await renderScreen();
     fireEvent.press(
       screen.getByLabelText(
         new RegExp(
@@ -226,11 +298,14 @@ describe('views stay on the same date', () => {
       ),
     );
 
-    expect(screen.getByText(monthLabel(2026, 3))).toBeOnTheScreen();
+    expect(screen.getByTestId('calendar-view-day')).toBeOnTheScreen();
+    expect(
+      screen.getByText(periodLabel('day', new Date(2026, 3, 2))),
+    ).toBeOnTheScreen();
   });
 
-  test('a day chosen in the week view is where the day view opens', () => {
-    renderScreen();
+  test('a day chosen in the week view is where the day view opens', async () => {
+    await renderScreen();
     showView('week');
     fireEvent.press(
       screen.getByLabelText(
@@ -240,14 +315,14 @@ describe('views stay on the same date', () => {
       ),
     );
 
-    showView('day');
+    expect(screen.getByTestId('calendar-view-day')).toBeOnTheScreen();
     expect(
       screen.getByText(periodLabel('day', new Date(2026, 2, 19))),
     ).toBeOnTheScreen();
   });
 
-  test('a round trip through every view keeps the day swiped to', () => {
-    renderScreen();
+  test('a round trip through every view keeps the day swiped to', async () => {
+    await renderScreen();
     showView('day');
     swipePages('day', 4);
 
@@ -258,5 +333,59 @@ describe('views stay on the same date', () => {
     expect(
       screen.getByText(periodLabel('day', new Date(2026, 2, 21))),
     ).toBeOnTheScreen();
+  });
+});
+
+test.each(['month', 'week', 'day'] as const)(
+  'an event in %s opens its full details without navigating away',
+  async view => {
+    const event: CalendarEvent = {
+      id: 'details',
+      title: 'A long event title that must remain complete in the day agenda',
+      start: new Date(2026, 2, 17, 13),
+      end: new Date(2026, 2, 18, 14),
+      description: 'All of the notes\nIncluding another paragraph.',
+    };
+    const store = memoryStore();
+    await store.save([event]);
+    await renderScreen(store);
+    if (view !== 'month') {
+      showView(view);
+    }
+    fireEvent.press(
+      screen.getAllByRole('button', {
+        name: new RegExp(`^${event.title},`),
+      })[0],
+    );
+    const sheet = screen.getByTestId('event-details-sheet');
+    expect(within(sheet).getByText(event.title)).toBeOnTheScreen();
+    expect(within(sheet).getByText(event.description!)).toBeOnTheScreen();
+    expect(
+      within(sheet).getByText(formatEventDateTime(event.start)),
+    ).toBeOnTheScreen();
+    expect(
+      within(sheet).getByText(formatEventDateTime(event.end!)),
+    ).toBeOnTheScreen();
+    fireEvent.press(within(sheet).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTestId('event-details-sheet')).toBeNull();
+    expect(screen.getByTestId(`calendar-view-${view}`)).toBeOnTheScreen();
+  },
+);
+
+test('opening the add form reads a fresh clock each time', async () => {
+  const getNow = jest.fn().mockReturnValue(today);
+  await renderScreen(memoryStore(), getNow);
+  fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+  fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+  const later = new Date(2026, 2, 17, 16, 30, 1);
+  getNow.mockReturnValue(later);
+  fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+  expect(
+    screen.getByRole('button', { name: 'Starts time' }),
+  ).toHaveAccessibilityValue({
+    text: new Date(2026, 2, 17, 16, 45).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    }),
   });
 });

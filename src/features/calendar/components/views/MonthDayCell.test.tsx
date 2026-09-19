@@ -40,14 +40,12 @@ test('pressing the tile reports its exact day', () => {
   expect(onPress).toHaveBeenCalledWith(day);
 });
 
-test('the body lists each event with its time and a truncated title', () => {
+test('the body prioritizes the title and exposes the time in the event button label', () => {
   const events = makeEvents(2);
   renderCell({ events });
 
   events.forEach(event => {
-    const row = screen.getByText(
-      `${formatEventTime(event.start)} ${event.title}`,
-    );
+    const row = screen.getByText(event.title);
     expect(row).toBeOnTheScreen();
     expect(row.props.numberOfLines).toBe(1);
   });
@@ -81,5 +79,26 @@ test('an adjacent-month day says so and stays pressable', () => {
     })}, outside the displayed month, 0 events`,
   );
   fireEvent.press(cell);
+  expect(onPress).toHaveBeenCalledWith(day);
+});
+
+test('event buttons open details independently of the day button', () => {
+  const events = makeEvents(2);
+  const onPress = jest.fn();
+  const onSelectEvent = jest.fn();
+  renderCell({ events, onPress, onSelectEvent });
+  fireEvent.press(
+    screen.getByRole('button', {
+      name: `${events[0].title}, ${formatEventTime(events[0].start)}`,
+    }),
+  );
+  expect(onSelectEvent).toHaveBeenCalledWith(events[0]);
+  expect(onPress).not.toHaveBeenCalled();
+});
+
+test('the overflow counter opens the full day', () => {
+  const onPress = jest.fn();
+  renderCell({ events: makeEvents(5), onPress });
+  fireEvent.press(screen.getByText('+3'));
   expect(onPress).toHaveBeenCalledWith(day);
 });

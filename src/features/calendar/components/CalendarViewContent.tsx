@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { spacing } from '../../../shared/theme';
+import { controlSizes, spacing } from '../../../shared/theme';
 import type { CalendarEvent, CalendarView } from '../types';
 import { CalendarPager } from './CalendarPager';
 import { DayView } from './views/DayView';
@@ -17,6 +17,7 @@ export type CalendarViewContentProps = {
   events?: readonly CalendarEvent[];
   onChangeDate?: (pageDate: Date) => void;
   onSelectDay?: (day: Date) => void;
+  onSelectEvent?: (event: CalendarEvent) => void;
 };
 
 /** Every view pages the same way; only the page contents differ. */
@@ -29,6 +30,7 @@ export function CalendarViewContent({
   events = [],
   onChangeDate = noop,
   onSelectDay,
+  onSelectEvent,
 }: CalendarViewContentProps) {
   const renderPage = useCallback(
     (pageDate: Date) => {
@@ -40,6 +42,7 @@ export function CalendarViewContent({
             selectedDate={selectedDate}
             events={events}
             onSelectDay={onSelectDay}
+            onSelectEvent={onSelectEvent}
           />
         );
       }
@@ -48,19 +51,26 @@ export function CalendarViewContent({
       return (
         <ScrollView contentContainerStyle={styles.scroll}>
           {view === 'day' ? (
-            <DayView date={pageDate} today={today} />
+            <DayView
+              date={pageDate}
+              today={today}
+              events={events}
+              onSelectEvent={onSelectEvent}
+            />
           ) : (
             <WeekView
               date={pageDate}
               today={today}
               selectedDate={selectedDate}
               onSelectDay={onSelectDay}
+              events={events}
+              onSelectEvent={onSelectEvent}
             />
           )}
         </ScrollView>
       );
     },
-    [events, onSelectDay, selectedDate, today, view],
+    [events, onSelectDay, onSelectEvent, selectedDate, today, view],
   );
 
   return (
@@ -77,5 +87,9 @@ export function CalendarViewContent({
 function noop() {}
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing.lg, gap: spacing.md },
+  scroll: {
+    padding: spacing.lg,
+    paddingBottom: controlSizes.lg + spacing.xl * 2,
+    gap: spacing.md,
+  },
 });

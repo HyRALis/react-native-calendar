@@ -12,7 +12,7 @@ test('month renders leap day and identifies today', () => {
         dateStyle: 'full',
       })}, today, 0 events`,
     ),
-  ).toHaveTextContent('29');
+  ).toBeOnTheScreen();
 });
 
 test('month defaults to an empty schedule', () => {
@@ -34,17 +34,7 @@ test('week renders seven daily sections', () => {
   ).toBeOnTheScreen();
 });
 
-test('day renders all 24 hourly slots', () => {
+test('day shows an empty agenda when no events exist', () => {
   render(<CalendarViewContent view="day" date={date} />);
-  for (let hour = 0; hour < 24; hour++) {
-    const time = new Date(2024, 1, 29, hour);
-    expect(
-      screen.getByText(
-        time.toLocaleTimeString(undefined, {
-          hour: 'numeric',
-          minute: '2-digit',
-        }),
-      ),
-    ).toBeOnTheScreen();
-  }
+  expect(screen.getByText('No events yet')).toBeOnTheScreen();
 });

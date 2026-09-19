@@ -1,11 +1,15 @@
 import {
   addDays,
+  addMinutes,
   addMonths,
+  atTime,
+  combineDateAndTime,
   differenceInMonths,
   getMonthWeeks,
   getWeekDays,
   isSameDay,
   isSameMonth,
+  minutesOfDay,
   startOfMonth,
 } from './calendarDates';
 
@@ -80,5 +84,37 @@ test('differenceInMonths is signed and spans years', () => {
   );
   expect(differenceInMonths(new Date(2027, 0, 1), new Date(2025, 11, 1))).toBe(
     -13,
+  );
+});
+
+test('minutesOfDay counts from midnight', () => {
+  expect(minutesOfDay(new Date(2026, 2, 17, 0, 0))).toBe(0);
+  expect(minutesOfDay(new Date(2026, 2, 17, 9, 30))).toBe(570);
+  expect(minutesOfDay(new Date(2026, 2, 17, 23, 59))).toBe(1439);
+});
+
+test('atTime keeps the calendar day and sets the time', () => {
+  const day = new Date(2026, 2, 17, 23, 45);
+  expect(atTime(day, 570)).toEqual(new Date(2026, 2, 17, 9, 30));
+});
+
+test('atTime rolls a whole day into tomorrow', () => {
+  expect(atTime(new Date(2026, 2, 17, 12), 24 * 60)).toEqual(
+    new Date(2026, 2, 18, 0, 0),
+  );
+});
+
+test('combineDateAndTime takes the day from one date and the clock from another', () => {
+  expect(
+    combineDateAndTime(new Date(2026, 3, 2, 12), new Date(2026, 2, 17, 8, 15)),
+  ).toEqual(new Date(2026, 3, 2, 8, 15));
+});
+
+test('addMinutes moves by elapsed time and crosses midnight', () => {
+  expect(addMinutes(new Date(2026, 2, 17, 23, 30), 60)).toEqual(
+    new Date(2026, 2, 18, 0, 30),
+  );
+  expect(addMinutes(new Date(2026, 2, 17, 9, 0), -90)).toEqual(
+    new Date(2026, 2, 17, 7, 30),
   );
 });

@@ -19,6 +19,7 @@ export type MonthViewProps = {
   events?: readonly CalendarEvent[];
   maxEventRows?: number;
   onSelectDay?: (day: Date) => void;
+  onSelectEvent?: (event: CalendarEvent) => void;
 };
 
 /** One month as a full-height grid. Stateless: paging lives in MonthPager. */
@@ -29,6 +30,7 @@ export function MonthView({
   events = [],
   maxEventRows = 3,
   onSelectDay,
+  onSelectEvent,
 }: MonthViewProps) {
   const weeks = useMemo(() => getMonthWeeks(month), [month]);
 
@@ -56,6 +58,7 @@ export function MonthView({
                 isSelected={selectedDate ? isSameDay(day, selectedDate) : false}
                 maxEventRows={maxEventRows}
                 onPress={onSelectDay}
+                onSelectEvent={onSelectEvent}
               />
             ))}
           </View>

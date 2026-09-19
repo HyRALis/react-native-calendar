@@ -18,7 +18,10 @@ import { clampDateToRange } from '../utils/calendarPaging';
 export type CalendarNavigationState = {
   view: CalendarView;
   focusedDate: Date;
+  /** The day it is, anchored at midday for safe arithmetic. */
   today: Date;
+  /** The instant it is, for the places a time of day matters. */
+  now: Date;
   anchor: Date;
 };
 
@@ -47,6 +50,7 @@ export function createCalendarNavigationState({
   return {
     view: initialView,
     today: atMidday(today),
+    now: today,
     anchor,
     focusedDate: clampDateToRange(anchor, initialDate ?? today),
   };
