@@ -1,6 +1,9 @@
+import type { CalendarEvent } from '../types';
 import {
   createEventDraft,
   draftToEvent,
+  earliestStartFor,
+  eventToDraft,
   hasEventDraftErrors,
   roundUpToStep,
   setDraftEnd,
@@ -136,4 +139,79 @@ test('a draft for a day still to come stays on that day', () => {
   });
 
   expect(created.start).toEqual(new Date(2026, 3, 2, 10, 0));
+});
+
+describe('editing an event that already exists', () => {
+  const stored: CalendarEvent = {
+    id: 'event-1',
+    title: 'Standup',
+    start: new Date(2026, 2, 17, 9, 0),
+    end: new Date(2026, 2, 17, 9, 30),
+    description: 'Daily sync',
+  };
+
+  test('a stored event becomes the draft the form edits', () => {
+    expect(eventToDraft(stored)).toEqual({
+      title: 'Standup',
+      description: 'Daily sync',
+      start: new Date(2026, 2, 17, 9, 0),
+      end: new Date(2026, 2, 17, 9, 30),
+    });
+  });
+
+  test('a missing description becomes an empty field, not undefined', () => {
+    const { description } = eventToDraft({
+      id: 'event-2',
+      title: 'Focus',
+      start: new Date(2026, 2, 17, 9, 0),
+    });
+
+    expect(description).toBe('');
+  });
+
+  test('a missing end becomes the default duration, so the field has a value', () => {
+    const { end } = eventToDraft({
+      id: 'event-3',
+      title: 'Focus',
+      start: new Date(2026, 2, 17, 9, 0),
+    });
+
+    expect(end).toEqual(new Date(2026, 2, 17, 10, 0));
+  });
+
+  test('a round trip through the draft keeps the id and every field', () => {
+    expect(draftToEvent(eventToDraft(stored), stored.id)).toEqual(stored);
+  });
+
+  test('an event still to come is floored at now, like a new one', () => {
+    const now = new Date(2026, 2, 17, 8, 0);
+
+    expect(earliestStartFor(stored, now)).toBe(now);
+  });
+
+  test('an event that has already begun keeps its own start as the floor', () => {
+    const now = new Date(2026, 2, 17, 14, 0);
+
+    expect(earliestStartFor(stored, now)).toBe(stored.start);
+  });
+
+  test('a draft for an event that has begun stays valid where it is', () => {
+    const now = new Date(2026, 2, 17, 14, 0);
+
+    expect(
+      validateEventDraft(eventToDraft(stored), earliestStartFor(stored, now)),
+    ).toEqual({});
+  });
+
+  test('an event that has begun still cannot be dragged further back', () => {
+    const now = new Date(2026, 2, 17, 14, 0);
+    const moved = setDraftStart(
+      eventToDraft(stored),
+      new Date(2026, 2, 17, 8, 0),
+    );
+
+    expect(
+      validateEventDraft(moved, earliestStartFor(stored, now)).start,
+    ).toBeDefined();
+  });
 });

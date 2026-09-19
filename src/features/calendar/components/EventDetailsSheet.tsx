@@ -7,10 +7,16 @@ import { formatEventDateTime } from '../utils/calendarEvents';
 
 export type EventDetailsSheetProps = {
   event: CalendarEvent;
+  /** Omitted where an event cannot be changed; the action is then hidden. */
+  onEdit?: (event: CalendarEvent) => void;
   onClose: () => void;
 };
 
-export function EventDetailsSheet({ event, onClose }: EventDetailsSheetProps) {
+export function EventDetailsSheet({
+  event,
+  onEdit,
+  onClose,
+}: EventDetailsSheetProps) {
   return (
     <BottomSheet
       visible
@@ -39,7 +45,21 @@ export function EventDetailsSheet({ event, onClose }: EventDetailsSheetProps) {
           </Typography>
         </View>
       </ScrollView>
-      <Button title="Close" variant="outline" onPress={onClose} />
+      <View style={styles.actions}>
+        <Button
+          title="Close"
+          variant="ghost"
+          onPress={onClose}
+          style={styles.action}
+        />
+        {onEdit ? (
+          <Button
+            title="Edit event"
+            onPress={() => onEdit(event)}
+            style={styles.action}
+          />
+        ) : null}
+      </View>
     </BottomSheet>
   );
 }
@@ -48,4 +68,6 @@ const styles = StyleSheet.create({
   scroll: { flexShrink: 1 },
   content: { gap: spacing.lg, paddingBottom: spacing.sm },
   field: { gap: spacing.xs },
+  actions: { flexDirection: 'row', gap: spacing.sm },
+  action: { flex: 1 },
 });

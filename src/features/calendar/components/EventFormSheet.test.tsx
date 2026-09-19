@@ -1,7 +1,8 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { CalendarEvent } from '../types';
 import { formatTimeOfDay } from '../utils/timeOfDay';
-import { AddEventSheet } from './AddEventSheet';
+import { EventFormSheet } from './EventFormSheet';
 
 const focused = new Date(2026, 2, 17, 12);
 /** Pinned so the default start does not depend on the clock the suite runs on. */
@@ -20,7 +21,7 @@ function renderSheet() {
   const onSubmit = jest.fn();
   const onClose = jest.fn();
   render(
-    <AddEventSheet
+    <EventFormSheet
       initialDate={focused}
       today={focused}
       now={now}
@@ -210,4 +211,139 @@ test('cancelling closes without submitting', () => {
 
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(onSubmit).not.toHaveBeenCalled();
+});
+
+describe('editing an event that already exists', () => {
+  const stored: CalendarEvent = {
+    id: 'event-1',
+    title: 'Standup',
+    start: new Date(2026, 2, 17, 14, 0),
+    end: new Date(2026, 2, 17, 14, 30),
+    description: 'Daily sync',
+  };
+
+  function renderEdit(event: CalendarEvent = stored, clock: Date = now) {
+    const onSubmit = jest.fn();
+    const onClose = jest.fn();
+    render(
+      <EventFormSheet
+        event={event}
+        today={focused}
+        now={clock}
+        onSubmit={onSubmit}
+        onClose={onClose}
+      />,
+    );
+
+    return { onSubmit, onClose };
+  }
+
+  function saveChanges() {
+    fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
+  }
+
+  test('the sheet is titled for editing and offers to save changes', () => {
+    renderEdit();
+
+    expect(screen.getByRole('header', { name: 'Edit event' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Save changes' }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Save event' })).toBeNull();
+  });
+
+  test('every field opens on what the event already holds', () => {
+    renderEdit();
+
+    expect(screen.getByDisplayValue('Standup')).toBeOnTheScreen();
+    expect(screen.getByDisplayValue('Daily sync')).toBeOnTheScreen();
+    expect(screen.getAllByText(dateLabel(stored.start)).length).toBe(2);
+    expect(screen.getByText(formatTimeOfDay(14 * 60))).toBeOnTheScreen();
+    expect(screen.getByText(formatTimeOfDay(14 * 60 + 30))).toBeOnTheScreen();
+  });
+
+  test('saving reports the edited draft, not a fresh one', () => {
+    const { onSubmit } = renderEdit();
+
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup, moved');
+    saveChanges();
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Standup, moved',
+        description: 'Daily sync',
+        start: stored.start,
+        end: stored.end,
+      }),
+    );
+  });
+
+  test('clearing the title is rejected as it is for a new event', () => {
+    const { onSubmit } = renderEdit();
+
+    fireEvent.changeText(screen.getByLabelText('Title'), '   ');
+    saveChanges();
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('alert', { name: 'Enter a title for this event.' }),
+    ).toBeOnTheScreen();
+  });
+
+  test('an event that has already begun can still be saved unchanged', () => {
+    // 2pm event, edited at 6pm: it is in the past, but a typo must be fixable.
+    const { onSubmit } = renderEdit(stored, new Date(2026, 2, 17, 18, 0));
+
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup, renamed');
+    saveChanges();
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ start: stored.start }),
+    );
+  });
+
+  test('an event that has begun still cannot be dragged further back', () => {
+    renderEdit(stored, new Date(2026, 2, 17, 18, 0));
+
+    fireEvent.press(screen.getByRole('button', { name: 'Starts date' }));
+
+    // Its own start day is the floor, so the day before is out of reach.
+    expect(
+      screen.getByRole('button', {
+        name: new Date(2026, 2, 16, 12).toLocaleDateString(undefined, {
+          dateStyle: 'full',
+        }),
+      }),
+    ).toBeDisabled();
+  });
+
+  test('an event still to come cannot be moved into the past', () => {
+    renderEdit(stored, new Date(2026, 2, 17, 9, 47));
+
+    fireEvent.press(screen.getByRole('button', { name: 'Starts time' }));
+
+    expect(
+      screen.queryByRole('radio', { name: formatTimeOfDay(8 * 60) }),
+    ).toBeNull();
+  });
+
+  test('an event with no stored end is given one to edit', () => {
+    renderEdit({
+      id: 'event-2',
+      title: 'Focus',
+      start: new Date(2026, 2, 17, 14, 0),
+    });
+
+    expect(screen.getByText(formatTimeOfDay(15 * 60))).toBeOnTheScreen();
+  });
+
+  test('cancelling reports nothing', () => {
+    const { onSubmit, onClose } = renderEdit();
+
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Changed');
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

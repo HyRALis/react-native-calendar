@@ -67,6 +67,33 @@ export function createEventDraft(
   };
 }
 
+/**
+ * An existing event as a draft the form can edit. Stored events may have no
+ * end — the form always shows one — so a missing end becomes the default
+ * duration rather than leaving the field empty.
+ */
+export function eventToDraft(
+  event: CalendarEvent,
+  durationMinutes = defaultDurationMinutes,
+): EventDraft {
+  return {
+    title: event.title,
+    description: event.description ?? '',
+    start: event.start,
+    end: event.end ?? addMinutes(event.start, durationMinutes),
+  };
+}
+
+/**
+ * The earliest a draft for `event` may start. An event that has already begun
+ * keeps its own start as the floor, so a typo in yesterday's meeting can still
+ * be fixed; anything still to come is floored at now like a new event, so
+ * nothing can be dragged backwards into the past.
+ */
+export function earliestStartFor(event: CalendarEvent, now: Date): Date {
+  return event.start.getTime() < now.getTime() ? event.start : now;
+}
+
 /** Moving the start carries the end along, so the duration is kept. */
 export function setDraftStart(draft: EventDraft, start: Date): EventDraft {
   const shift = start.getTime() - draft.start.getTime();

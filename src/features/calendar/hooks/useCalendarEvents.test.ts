@@ -268,3 +268,87 @@ test('switching repositories ignores late loads and keeps their events separate'
   ]);
   expect(first.save).not.toHaveBeenCalled();
 });
+
+describe('changing an event that already exists', () => {
+  test('the event is replaced in place, keeping its id and position', async () => {
+    const store = fakeStore([stored]);
+    const { result } = await renderEvents(store);
+    await waitFor(() => expect(result.current.events).toEqual([stored]));
+    act(() => {
+      result.current.addEvent(draft('Second'));
+    });
+
+    await act(async () => {
+      result.current.updateEvent('stored', draft('Renamed'));
+    });
+
+    expect(result.current.events.map(event => event.id)).toEqual([
+      'stored',
+      result.current.events[1].id,
+    ]);
+    expect(result.current.events.map(event => event.title)).toEqual([
+      'Renamed',
+      'Second',
+    ]);
+  });
+
+  test('the change is written back to the device', async () => {
+    const store = fakeStore([stored]);
+    const { result } = await renderEvents(store);
+    await waitFor(() => expect(result.current.events).toEqual([stored]));
+
+    await act(async () => {
+      result.current.updateEvent('stored', draft('Renamed'));
+    });
+
+    await waitFor(() =>
+      expect(store.save).toHaveBeenLastCalledWith(result.current.events),
+    );
+    const lastSave = store.saved[store.saved.length - 1];
+    expect(lastSave.map(event => event.title)).toEqual(['Renamed']);
+  });
+
+  test('an id that is not there changes nothing', async () => {
+    const store = fakeStore([stored]);
+    const { result } = await renderEvents(store);
+    await waitFor(() => expect(result.current.events).toEqual([stored]));
+
+    await act(async () => {
+      result.current.updateEvent('no-such-event', draft('Ghost'));
+    });
+
+    expect(result.current.events).toEqual([stored]);
+  });
+
+  test('an edit made while a read is in flight survives that read', async () => {
+    const loading = deferred<CalendarEvent[]>();
+    const store = fakeStore();
+    store.load = jest.fn(() => loading.promise);
+    const { result } = renderHook(() => useCalendarEvents(store));
+
+    act(() => {
+      result.current.addEvent(draft('During load'));
+    });
+    const [pending] = result.current.events;
+    act(() => {
+      result.current.updateEvent(pending.id, draft('Renamed during load'));
+    });
+    await act(async () => {
+      loading.resolve([stored]);
+    });
+
+    expect(result.current.events.map(event => event.title)).toEqual([
+      'From the device',
+      'Renamed during load',
+    ]);
+  });
+
+  test('the update action keeps one identity across renders', async () => {
+    const { result, rerender } = await renderEvents(fakeStore());
+    const first = result.current.updateEvent;
+
+    rerender(undefined);
+
+    expect(result.current.updateEvent).toBe(first);
+  });
+});

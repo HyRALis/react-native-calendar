@@ -6,9 +6,10 @@ import {
   Typography,
 } from '../../../shared/components';
 import { colors, spacing } from '../../../shared/theme';
-import { AddEventSheet } from '../components/AddEventSheet';
 import { CalendarActionsBar } from '../components/CalendarActionsBar';
 import { CalendarViewContent } from '../components/CalendarViewContent';
+import { EventDetailsSheet } from '../components/EventDetailsSheet';
+import { EventFormSheet } from '../components/EventFormSheet';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import {
   useCalendarActions,
@@ -16,7 +17,6 @@ import {
 } from '../navigation/CalendarNavigationProvider';
 import type { EventStore } from '../storage/eventStore';
 import type { CalendarEvent } from '../types';
-import { EventDetailsSheet } from '../components/EventDetailsSheet';
 
 export type CalendarScreenProps = {
   /** Where events are read from and written back to; injectable for tests. */
@@ -44,11 +44,17 @@ export function CalendarScreen({
     focusDate,
     openDay,
   } = useCalendarActions();
-  const { events, addEvent, error, retry } = useCalendarEvents(eventStore);
+  const { events, addEvent, updateEvent, error, retry } =
+    useCalendarEvents(eventStore);
   const [adding, setAdding] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null,
   );
+
+  const [editing, setEditing] = useState<{
+    event: CalendarEvent;
+    now: Date;
+  } | null>(null);
 
   return (
     <View style={styles.screen}>
@@ -102,7 +108,7 @@ export function CalendarScreen({
       />
 
       {adding ? (
-        <AddEventSheet
+        <EventFormSheet
           initialDate={focusedDate}
           today={adding}
           now={adding}
@@ -118,7 +124,24 @@ export function CalendarScreen({
       {selectedEvent ? (
         <EventDetailsSheet
           event={selectedEvent}
+          onEdit={event => {
+            setSelectedEvent(null);
+            setEditing({ event, now: getNow() });
+          }}
           onClose={() => setSelectedEvent(null)}
+        />
+      ) : null}
+      {editing ? (
+        <EventFormSheet
+          event={editing.event}
+          today={editing.now}
+          now={editing.now}
+          onSubmit={draft => {
+            updateEvent(editing.event.id, draft);
+            focusDate(draft.start);
+            setEditing(null);
+          }}
+          onClose={() => setEditing(null)}
         />
       ) : null}
     </View>

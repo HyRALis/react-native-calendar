@@ -6,6 +6,7 @@ import { draftToEvent, type EventDraft } from '../utils/eventDraft';
 export type CalendarEventStore = {
   events: readonly CalendarEvent[];
   addEvent: (draft: EventDraft) => CalendarEvent;
+  updateEvent: (id: string, draft: EventDraft) => CalendarEvent;
   error: string | null;
   retry: () => void;
 };
@@ -108,8 +109,36 @@ export function useCalendarEvents(
     [persist, session],
   );
 
+  /**
+   * Replaces an event in place, keeping its id and its position in the list.
+   * Because hydration merges by id and lets the session win, an edit made
+   * while a read is still in flight survives that read rather than being
+   * overwritten by the stored copy.
+   */
+  const updateEvent = useCallback(
+    (id: string, draft: EventDraft) => {
+      const event = draftToEvent(draft, id);
+      session.events = session.events.map(current =>
+        current.id === id ? event : current,
+      );
+      session.dirty = true;
+      refresh();
+      if (session.loaded) {
+        persist();
+      }
+      return event;
+    },
+    [persist, session],
+  );
+
   const retry = useCallback(() => setAttempt(value => value + 1), []);
-  return { events: session.events, addEvent, error: session.error, retry };
+  return {
+    events: session.events,
+    addEvent,
+    updateEvent,
+    error: session.error,
+    retry,
+  };
 }
 
 let counter = 0;
