@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 export const colors = {
   background: '#F4F6F8',
@@ -29,6 +29,17 @@ export const radii = { sm: 6, md: 12, lg: 14, xl: 20 } as const;
 export const controlSizes = { sm: 44, md: 52, lg: 60 } as const;
 export type ControlSize = keyof typeof controlSizes;
 export const opacity = { pressed: 0.8, disabled: 0.55 } as const;
+
+/** Lift for surfaces that sit above the page rather than within it. */
+export const elevation = {
+  floating: {
+    shadowColor: colors.text,
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+} as const satisfies Record<string, ViewStyle>;
 
 export const typography = {
   display: { fontSize: 34, lineHeight: 42, fontWeight: '700' },

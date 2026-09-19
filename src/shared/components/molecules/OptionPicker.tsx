@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { colors, controlSizes, opacity, radii, spacing } from '../../theme';
 import { Button } from '../atoms/Button';
 import { Typography } from '../atoms/Typography';
+import { BottomSheet } from './BottomSheet';
 
 export type OptionPickerOption<T> = { value: T; label: string };
 
@@ -17,8 +18,8 @@ export type OptionPickerProps<T> = {
 };
 
 /**
- * A modal single-choice list. Built from core primitives so no picker
- * dependency is needed, and generic so any feature can reuse it.
+ * A single-choice list in a bottom sheet. Built from core primitives so no
+ * picker dependency is needed, and generic so any feature can reuse it.
  */
 export function OptionPicker<T extends string | number>({
   visible,
@@ -29,94 +30,51 @@ export function OptionPicker<T extends string | number>({
   onClose,
   closeLabel = 'Cancel',
 }: OptionPickerProps<T>) {
-  if (!visible) {
-    return null;
-  }
-
   return (
-    <Modal
-      transparent
-      visible
-      animationType="fade"
-      statusBarTranslucent
-      supportedOrientations={['portrait', 'landscape']}
-      onRequestClose={onClose}
-    >
-      <View
-        style={styles.overlay}
-        accessibilityViewIsModal
-        onAccessibilityEscape={onClose}
+    <BottomSheet visible={visible} title={title} onClose={onClose}>
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={styles.options}
+        accessibilityRole="radiogroup"
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Dismiss ${title.toLowerCase()}`}
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.panel}>
-          <Typography
-            variant="title"
-            accessibilityRole="header"
-            style={styles.title}
-          >
-            {title}
-          </Typography>
-          <ScrollView
-            contentContainerStyle={styles.options}
-            accessibilityRole="radiogroup"
-          >
-            {options.map(({ value, label }) => {
-              const selected = value === selectedValue;
-              return (
-                <Pressable
-                  key={String(value)}
-                  accessibilityRole="radio"
-                  accessibilityLabel={label}
-                  accessibilityState={{ checked: selected }}
-                  onPress={() => onSelect(value)}
-                  style={({ pressed }) => [
-                    styles.option,
-                    selected && styles.selected,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Typography
-                    variant={selected ? 'bodyStrong' : 'body'}
-                    tone={selected ? 'primary' : 'default'}
-                  >
-                    {label}
-                  </Typography>
-                  {selected ? (
-                    <Typography tone="primary" accessible={false}>
-                      {'✓'}
-                    </Typography>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <Button title={closeLabel} variant="ghost" onPress={onClose} />
-        </View>
-      </View>
-    </Modal>
+        {options.map(({ value, label }) => {
+          const selected = value === selectedValue;
+          return (
+            <Pressable
+              key={String(value)}
+              accessibilityRole="radio"
+              accessibilityLabel={label}
+              accessibilityState={{ checked: selected }}
+              onPress={() => onSelect(value)}
+              style={({ pressed }) => [
+                styles.option,
+                selected && styles.selected,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Typography
+                variant={selected ? 'bodyStrong' : 'body'}
+                tone={selected ? 'primary' : 'default'}
+              >
+                {label}
+              </Typography>
+              {selected ? (
+                <Typography tone="primary" accessible={false}>
+                  {'✓'}
+                </Typography>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <Button title={closeLabel} variant="ghost" onPress={onClose} />
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: colors.scrim,
-    justifyContent: 'flex-end',
-  },
-  panel: {
-    maxHeight: '70%',
-    padding: spacing.xl,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-  },
-  title: { marginBottom: spacing.xs },
+  /** Shrinks within the sheet's height cap so long lists scroll. */
+  list: { flexShrink: 1 },
   options: { gap: spacing.xs, paddingBottom: spacing.sm },
   option: {
     minHeight: controlSizes.sm,
