@@ -54,7 +54,9 @@ test('asking to edit reports the event being shown', () => {
 
   fireEvent.press(screen.getByRole('button', { name: 'Edit event' }));
 
-  expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'event-1' }));
+  expect(onEdit).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 'event-1' }),
+  );
   expect(onClose).not.toHaveBeenCalled();
 });
 

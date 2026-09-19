@@ -257,6 +257,90 @@ describe('adding an event', () => {
   });
 });
 
+describe('editing an event', () => {
+  /** Adds one event on the focused day and returns to the settled grid. */
+  async function addStandup() {
+    fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
+    fireEvent.press(screen.getByRole('button', { name: 'Save event' }));
+    await act(async () => {});
+  }
+
+  test('tapping an event opens its details, which offer to edit it', async () => {
+    await renderScreen();
+    await addStandup();
+
+    fireEvent.press(screen.getByLabelText(/^Standup, /));
+
+    expect(
+      screen.getByRole('header', { name: 'Event details' }),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Edit event' }),
+    ).toBeOnTheScreen();
+  });
+
+  test('the form opens on the event and details give way to it', async () => {
+    await renderScreen();
+    await addStandup();
+
+    fireEvent.press(screen.getByLabelText(/^Standup, /));
+    fireEvent.press(screen.getByRole('button', { name: 'Edit event' }));
+
+    expect(screen.queryByRole('header', { name: 'Event details' })).toBeNull();
+    expect(
+      screen.getByRole('header', { name: 'Edit event' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByDisplayValue('Standup')).toBeOnTheScreen();
+  });
+
+  test('a saved change replaces the event in the grid', async () => {
+    await renderScreen();
+    await addStandup();
+
+    fireEvent.press(screen.getByLabelText(/^Standup, /));
+    fireEvent.press(screen.getByRole('button', { name: 'Edit event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup, moved');
+    fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(screen.queryByRole('header', { name: 'Edit event' })).toBeNull();
+    expect(screen.getByText(/Standup, moved$/)).toBeOnTheScreen();
+    // The old title is gone rather than sitting alongside the new one.
+    expect(screen.queryByText('Standup')).toBeNull();
+  });
+
+  test('an edit made in one session is there in the next', async () => {
+    const store = memoryStore();
+    await renderScreen(store);
+    await addStandup();
+
+    fireEvent.press(screen.getByLabelText(/^Standup, /));
+    fireEvent.press(screen.getByRole('button', { name: 'Edit event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Standup, moved');
+    fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
+    await act(async () => {});
+    screen.unmount();
+
+    await renderScreen(store);
+
+    expect(screen.getByText(/Standup, moved$/)).toBeOnTheScreen();
+    expect(screen.queryByText('Standup')).toBeNull();
+  });
+
+  test('cancelling the form leaves the event as it was', async () => {
+    await renderScreen();
+    await addStandup();
+
+    fireEvent.press(screen.getByLabelText(/^Standup, /));
+    fireEvent.press(screen.getByRole('button', { name: 'Edit event' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Discarded');
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.getByText('Standup')).toBeOnTheScreen();
+    expect(screen.queryByText('Discarded')).toBeNull();
+  });
+});
+
 describe('views stay on the same date', () => {
   test('a month reached by swiping is the month the other views show', async () => {
     await renderScreen();

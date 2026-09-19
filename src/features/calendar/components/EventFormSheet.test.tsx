@@ -245,7 +245,9 @@ describe('editing an event that already exists', () => {
   test('the sheet is titled for editing and offers to save changes', () => {
     renderEdit();
 
-    expect(screen.getByRole('header', { name: 'Edit event' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('header', { name: 'Edit event' }),
+    ).toBeOnTheScreen();
     expect(
       screen.getByRole('button', { name: 'Save changes' }),
     ).toBeOnTheScreen();

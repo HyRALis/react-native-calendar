@@ -320,11 +320,16 @@ Leaf components stay prop-driven. `CalendarActionsBar`, `MonthView` and
 `MonthDayCell` take plain props and are connected at `CalendarScreen`, so they
 remain reusable and testable without a provider.
 
-## Adding an event
+## Writing and changing an event
 
-The `+` button on the calendar opens `AddEventSheet`, a `BottomSheet` holding
-the start, the end, a title and a description. It is mounted only while open,
-so each visit starts from a blank draft.
+The `+` button on the calendar opens `EventFormSheet`, a `BottomSheet` holding
+the start, the end, a title and a description. Tapping an event opens
+`EventDetailsSheet`, whose Edit action closes the details and reopens that same
+form on the event, so the app carries one form rather than two near-copies of
+one. The difference is a single `event` prop: with it the sheet is titled Edit
+event and saves changes, without it the sheet is titled Add event and writes a
+new one. It is mounted only while open, so each visit starts from the draft it
+was given and nothing has to be reset on the way out.
 
 Every rule about a draft lives in `utils/eventDraft.ts` as pure functions, unit
 tested without rendering: where a new draft starts (the next free slot on the
@@ -401,3 +406,17 @@ event lists and ignore late responses. Two failure rules are worth knowing:
 The store is a parameter with a device-backed default, so `CalendarScreen`
 takes an `eventStore` prop and every test runs against a store of its own
 rather than a shared module singleton.
+
+### Editing without letting the past move
+
+The floor on how early a draft may start is not simply "now" once an event
+exists. `earliestStartFor` gives an event that has already begun its own start
+as the floor, so a typo in yesterday's meeting can still be fixed, while an
+event still to come is floored at now like a new one. Either way the start
+cannot be dragged backwards, and the same `validateEventDraft` call enforces
+it: the edit case passes a different clock, not a different rule.
+
+`updateEvent` replaces an event in place, keeping its id and its position in
+the list. Because hydration merges by id and lets the session win, an edit made
+while a read is still in flight survives that read instead of being overwritten
+by the stored copy.
