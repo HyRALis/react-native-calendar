@@ -64,14 +64,15 @@ it without passing that value through every intermediate component.
 
 The provider represents these states explicitly:
 
-| State       | Meaning                                  | Visible interface  |
-| ----------- | ---------------------------------------- | ------------------ |
-| `loading`   | Firebase is determining the current user | Loading screen     |
-| `signedOut` | No signed-in user                        | Sign in / Sign up  |
-| `signedIn`  | Firebase supplied a user                 | Calendar / Profile |
-| `error`     | The session listener reported a failure  | Error with retry   |
+| State       | Meaning                                      | Visible interface         |
+| ----------- | -------------------------------------------- | ------------------------- |
+| `loading`   | Firebase is determining the current user     | Loading screen            |
+| `signedOut` | No signed-in user                            | Sign in / Sign up         |
+| `locked`    | Restored identity needs local authentication | Biometric/password choice |
+| `signedIn`  | Firebase identity explicitly authenticated   | Calendar / Profile        |
+| `error`     | The session listener reported a failure      | Error with retry          |
 
-Notice the union type in `AuthProvider.tsx`. Each state allows only the data
+Notice the union type in `session.ts`. Each state allows only the data
 appropriate to it. For example, `signedIn` requires a user. TypeScript can then
 help us avoid trying to read a user ID from a signed-out state.
 
@@ -158,8 +159,8 @@ a contract describing the operations the screens and provider can use.
 
 ```ts
 interface AccountActions {
-  signIn(credentials: Credentials): Promise<void>;
-  signUp(credentials: Credentials): Promise<void>;
+  signIn(credentials: Credentials): Promise<AuthUser>;
+  signUp(credentials: Credentials): Promise<AuthUser>;
   signOut(): Promise<void>;
   getIdToken(): Promise<string | null>;
 }
@@ -168,8 +169,9 @@ interface AccountActions {
 This excerpt groups four actions for illustration; the actual `AuthService`
 interface also includes the session subscription.
 
-`Promise<void>` means the operation finishes later without returning a useful
-value. `Promise<string | null>` finishes with a token string or no token.
+`Promise<AuthUser>` returns the identity verified by that credential request.
+`Promise<void>` finishes without a useful value. `Promise<string | null>`
+finishes with a token string or no token.
 
 [`firebaseAuthService.ts`](../src/features/auth/services/firebaseAuthService.ts)
 implements that contract using Firebase's SDK. Registration calls
@@ -201,18 +203,18 @@ User taps Sign in
   -> validate credentials
   -> Firebase service sends the request
   -> Firebase signs in and notifies the session listener
-  -> AuthProvider receives the user
+  -> the session gate checks the completed password request and current identity
   -> RootNavigator renders Calendar and Profile
 ```
 
 The form does not manually navigate to Calendar after awaiting sign-in.
-Firebase's session notification is the source of truth. This also makes session
-restoration work without duplicating navigation logic.
+Firebase determines the identity. The session gate separately determines whether
+that identity has explicitly authenticated during the current foreground session.
+Restoration alone leaves Calendar and Profile locked.
 
-On logout, Firebase emits a signed-out state. The private navigator is removed
-and the public navigator is mounted. This removes private Back-button history.
-Profile waits for the service to sign out; a failed operation shows an error
-instead of claiming the session has been cleared.
+Logout immediately locks and removes the private navigator, clears biometric
+opt-in, and asks Firebase to sign out. Successful logout shows the public form.
+A failed operation stays locked with an error and retry action.
 
 ## 8. Understand tokens and persistence
 
@@ -229,9 +231,10 @@ value we put there is Firebase's serialized session, **not the user's account
 password**. The SDK decides what session data to serialize. The storage adapter
 does not implement token refresh or verify credentials itself.
 
-Native secure storage protects saved data; it does not automatically add
-biometric sign-in. That is a later feature. Likewise, a private screen is not
-backend authorization. When meetings are added, Firestore Security Rules or a
+Native secure storage protects saved data. The separate
+[biometric session gate](biometric-sign-in.md) requires fresh authentication
+before restored sessions can expose private data or tokens. A private screen is
+not backend authorization. Firestore Security Rules or a
 custom server must prevent users from accessing someone else's meetings.
 
 ## 9. Read the tests as examples of intended behavior
@@ -289,5 +292,6 @@ backups and diagnostics were stored.
 
 For the next milestone, keep the same pattern: describe the behavior, implement
 one coherent change, verify it at the appropriate level, and explain the result
-in a focused commit. Meeting creation/editing and biometrics are still separate
-milestones; the Calendar landing screen does not implement them yet.
+in a focused commit. Calendar event creation/editing and biometric sign-in now
+extend this initial account flow; see the README and biometric guide for their
+current behavior and verification boundaries.

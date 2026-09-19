@@ -7,8 +7,8 @@ export interface AuthService {
     onUser: (user: AuthUser | null) => void,
     onError: (error: unknown) => void,
   ): () => void;
-  signIn(credentials: Credentials): Promise<void>;
-  signUp(credentials: Credentials): Promise<void>;
+  signIn(credentials: Credentials): Promise<AuthUser>;
+  signUp(credentials: Credentials): Promise<AuthUser>;
   signOut(): Promise<void>;
-  getIdToken(): Promise<string | null>;
+  getIdToken(forceRefresh?: boolean): Promise<string | null>;
 }

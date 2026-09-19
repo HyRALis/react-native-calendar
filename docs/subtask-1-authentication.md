@@ -9,7 +9,8 @@ configuration supplied by the user lives in a Git-ignored `.env` and is read by
 
 - Email/password registration and sign-in with field validation.
 - Registration also signs the user in and opens Calendar.
-- Calendar and Profile are available only after Firebase supplies a user.
+- Calendar and Profile require a Firebase user and explicit password or biometric
+  authentication. Restored sessions stay locked until authenticated locally.
 - Profile shows email, account ID, and Logout.
 - Logout removes the session through Firebase and replaces private navigation.
 - Startup waits for Firebase to restore the saved session.
@@ -18,8 +19,8 @@ configuration supplied by the user lives in a Git-ignored `.env` and is read by
 - Errors and pending requests have explicit UI states; repeated taps do not
   create duplicate requests.
 
-Calendar is the landing screen in this milestone. Meeting creation/editing and
-biometric sign-in remain later milestones. Firebase configuration alone does not
+Calendar is the landing screen. Biometric sign-in and session locking are now
+implemented; see [the biometric guide](biometric-sign-in.md). Firebase configuration alone does not
 prove that Email/Password has been enabled or that a live account flow succeeds.
 
 ## Validation decisions
@@ -47,8 +48,8 @@ use Firebase. Production code does not contain a fake login or a simulated token
 2. Successful registration opens Calendar and Profile shows the correct account.
 3. Invalid credentials leave the user signed out with a readable error.
 4. Duplicate registration cannot overwrite an existing Firebase account.
-5. A saved valid session restores on relaunch without flashing private screens
-   before Firebase finishes loading.
+5. A saved session restores into a locked state without flashing private screens.
+   Opted-in users can unlock with biometrics; all users can use password sign-in.
 6. Logout returns to Sign in, clears the persisted session through the SDK, and
    prevents Back navigation to private screens.
 7. Logout does not delete the account; the same credentials can sign in again.

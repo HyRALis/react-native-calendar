@@ -4,6 +4,7 @@ import {
   signOut,
   onIdTokenChanged,
   type Auth,
+  type UserCredential,
 } from 'firebase/auth';
 import { createFirebaseAuthService } from './firebaseAuthService';
 
@@ -23,6 +24,11 @@ const auth = { currentUser: null } as Auth;
 const service = createFirebaseAuthService(auth);
 beforeEach(() => {
   jest.clearAllMocks();
+  const credential = {
+    user: { uid: 'account', email: 'user@example.com' },
+  } as UserCredential;
+  jest.mocked(signInWithEmailAndPassword).mockResolvedValue(credential);
+  jest.mocked(createUserWithEmailAndPassword).mockResolvedValue(credential);
 });
 test('registers with Firebase and preserves password whitespace', async () => {
   await service.signUp({

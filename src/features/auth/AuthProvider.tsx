@@ -1,59 +1,57 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { AuthService, AuthUser } from './types';
-import { authErrorMessage } from './services/authErrorMessage';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
+import { AppState } from 'react-native';
+import type { AuthService } from './types';
+import {
+  biometricService,
+  type BiometricService,
+} from './services/biometricService';
+import { createAuthSession } from './session';
 
-type AuthState =
-  | { status: 'loading'; user: null }
-  | { status: 'signedOut'; user: null }
-  | { status: 'signedIn'; user: AuthUser }
-  | { status: 'error'; user: null; message: string };
-type AuthContextValue = {
-  state: AuthState;
-  service: AuthService;
-  retry: () => void;
-};
+type Session = ReturnType<typeof createAuthSession>;
+type AuthContextValue = ReturnType<Session['getSnapshot']> &
+  Pick<Session, 'service' | 'retry' | 'unlock' | 'setBiometrics'>;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({
   service,
+  biometrics = biometricService,
   children,
-}: React.PropsWithChildren<{ service: AuthService }>) {
-  const [state, setState] = useState<AuthState>({
-    status: 'loading',
-    user: null,
-  });
-  const [attempt, setAttempt] = useState(0);
+}: React.PropsWithChildren<{
+  service: AuthService;
+  biometrics?: BiometricService;
+}>) {
+  const session = useMemo(
+    () => createAuthSession(service, biometrics),
+    [service, biometrics],
+  );
+  const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   useEffect(() => {
-    let active = true;
-    setState({ status: 'loading', user: null });
-    const unsubscribe = service.subscribe(
-      user => {
-        if (active) {
-          setState(
-            user
-              ? { status: 'signedIn', user }
-              : { status: 'signedOut', user: null },
-          );
-        }
-      },
-      error => {
-        if (active) {
-          setState({
-            status: 'error',
-            user: null,
-            message: authErrorMessage(error),
-          });
-        }
-      },
+    const disconnect = session.connect();
+    session.appStateChanged(AppState.currentState ?? 'active');
+    const subscription = AppState.addEventListener(
+      'change',
+      session.appStateChanged,
     );
     return () => {
-      active = false;
-      unsubscribe();
+      subscription.remove();
+      disconnect();
     };
-  }, [service, attempt]);
+  }, [session]);
   return (
     <AuthContext.Provider
-      value={{ state, service, retry: () => setAttempt(value => value + 1) }}
+      value={{
+        ...snapshot,
+        service: session.service,
+        retry: session.retry,
+        unlock: session.unlock,
+        setBiometrics: session.setBiometrics,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal } from 'react-native';
+import { AppState, Modal } from 'react-native';
 import {
   act,
   fireEvent,
@@ -14,6 +14,7 @@ import type { AuthService, AuthUser } from '../src/features/auth/types';
 
 beforeEach(() => {
   jest.useFakeTimers();
+  AppState.currentState = 'active';
 });
 afterEach(() => {
   act(() => {
@@ -34,23 +35,41 @@ function setup(initialUser: AuthUser | null = null) {
     }),
     signIn: jest.fn(async () => {
       emit(user);
+      return user;
     }),
     signUp: jest.fn(async () => {
       emit(user);
+      return user;
     }),
     signOut: jest.fn(async () => {
       emit(null);
     }),
     getIdToken: jest.fn(async () => 'test-only-token'),
   };
+  const biometrics = {
+    availability: jest.fn(async () => 'Biometrics'),
+    isEnabled: jest.fn(async () => true),
+    setEnabled: jest.fn(async () => {}),
+    authenticate: jest.fn(async () => true),
+    cancel: jest.fn(),
+  };
   const result = render(
     <SafeAreaProvider>
-      <AuthProvider service={service}>
+      <AuthProvider service={service} biometrics={biometrics}>
         <RootNavigator />
       </AuthProvider>
     </SafeAreaProvider>,
   );
-  return { service, unsubscribe, ...result };
+  return { service, biometrics, unsubscribe, ...result };
+}
+
+async function setupUnlocked() {
+  const result = setup({ id: 'restored', email: 'returning@example.com' });
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByTestId('calendar-view-month');
+  return result;
 }
 
 function fillForm(password = 'password123') {
@@ -95,22 +114,27 @@ test('sign-in failure stays on the form with a readable error', async () => {
   expect(screen.queryByTestId('calendar-view-month')).toBeNull();
 });
 
-test('restored Firebase user starts on Calendar and unsubscribes on unmount', () => {
+test('restored Firebase user must unlock before Calendar and unsubscribes on unmount', async () => {
   const { unmount, unsubscribe } = setup({
     id: 'restored',
     email: 'returning@example.com',
   });
-  expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
+  expect(screen.queryByLabelText('Profile')).toBeNull();
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByTestId('calendar-view-month');
   unmount();
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 });
 
 test('blocks duplicate submissions while a sign-in request is pending', async () => {
   const { service } = setup();
-  let finish!: () => void;
+  let finish!: (user: AuthUser) => void;
   jest.mocked(service.signIn).mockImplementationOnce(
     () =>
-      new Promise<void>(resolve => {
+      new Promise<AuthUser>(resolve => {
         finish = resolve;
       }),
   );
@@ -120,24 +144,27 @@ test('blocks duplicate submissions while a sign-in request is pending', async ()
   fireEvent.press(button);
   expect(service.signIn).toHaveBeenCalledTimes(1);
   await act(async () => {
-    finish();
+    finish({ id: 'test-account', email: 'learner@example.com' });
   });
-  await waitFor(() => expect(button).not.toBeDisabled());
+  await screen.findByTestId('calendar-view-month');
 });
 
 test('logout failure does not pretend the persisted session is cleared', async () => {
-  const { service } = setup({ id: 'restored', email: 'returning@example.com' });
+  const { service } = await setupUnlocked();
   jest
     .mocked(service.signOut)
     .mockRejectedValueOnce(new Error('storage failure'));
   fireEvent.press(screen.getByLabelText('Profile'));
   fireEvent.press(screen.getByRole('button', { name: 'Logout' }));
-  await screen.findByText('Something went wrong. Please try again.');
-  expect(screen.getByText('Your profile')).toBeOnTheScreen();
+  await screen.findByText(
+    'Sign-out could not finish. Your calendar is locked. Try again.',
+  );
+  expect(screen.queryByText('Your profile')).toBeNull();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
 });
 
-test('calendar header opens the drawer and switches between all three views', () => {
-  setup({ id: 'restored', email: 'returning@example.com' });
+test('calendar header opens the drawer and switches between all three views', async () => {
+  await setupUnlocked();
   expect(screen.getByRole('header', { name: 'Calendar' })).toBeOnTheScreen();
   expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
 
@@ -159,8 +186,8 @@ test('calendar header opens the drawer and switches between all three views', ()
   }
 });
 
-test('drawer closes with backdrop and Android back without changing the view', () => {
-  setup({ id: 'restored', email: 'returning@example.com' });
+test('drawer closes with backdrop and Android back without changing the view', async () => {
+  await setupUnlocked();
   fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
   fireEvent.press(
     screen.getByRole('button', { name: 'Dismiss calendar menu' }),
@@ -172,8 +199,8 @@ test('drawer closes with backdrop and Android back without changing the view', (
   expect(screen.getByTestId('calendar-view-month')).toBeOnTheScreen();
 });
 
-test('view selection survives tab changes and the Profile menu returns to Calendar', () => {
-  setup({ id: 'restored', email: 'returning@example.com' });
+test('view selection survives tab changes and the Profile menu returns to Calendar', async () => {
+  await setupUnlocked();
   fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
   fireEvent.press(screen.getByRole('radio', { name: 'Week' }));
   fireEvent.press(screen.getByLabelText('Profile'));
@@ -189,7 +216,7 @@ test('view selection survives tab changes and the Profile menu returns to Calend
 });
 
 test('logout clears the calendar view preference for the next session', async () => {
-  setup({ id: 'restored', email: 'returning@example.com' });
+  await setupUnlocked();
   fireEvent.press(screen.getByRole('button', { name: 'Open calendar menu' }));
   fireEvent.press(screen.getByRole('radio', { name: 'Day' }));
   fireEvent.press(screen.getByLabelText('Profile'));
@@ -201,4 +228,56 @@ test('logout clears the calendar view preference for the next session', async ()
   fillForm();
   fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
   await screen.findByTestId('calendar-view-month');
+});
+
+test('cancelled biometrics keeps private screens absent and password fallback works', async () => {
+  const { biometrics, service } = setup({
+    id: 'restored',
+    email: 'returning@example.com',
+  });
+  biometrics.authenticate.mockResolvedValueOnce(false);
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByText(
+    'Authentication was cancelled. Try again or use your password.',
+  );
+  expect(screen.queryByLabelText('Profile')).toBeNull();
+  fireEvent.press(screen.getByRole('button', { name: 'Use password' }));
+  await screen.findByText('Welcome back');
+  expect(biometrics.setEnabled).toHaveBeenCalledWith('restored', false);
+  expect(service.signOut).toHaveBeenCalledTimes(1);
+  fillForm();
+  fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+  await screen.findByTestId('calendar-view-month');
+});
+
+test('Profile can disable and enable biometric sign-in', async () => {
+  const { biometrics } = await setupUnlocked();
+  fireEvent.press(screen.getByLabelText('Profile'));
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Disable biometrics' }),
+  );
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Enable biometrics' }),
+  );
+  await waitFor(() =>
+    expect(biometrics.setEnabled).toHaveBeenLastCalledWith('restored', true),
+  );
+  expect(biometrics.authenticate).toHaveBeenCalledTimes(2);
+});
+
+test('backgrounding removes private screens and foregrounding requires unlock', async () => {
+  const listen = jest.spyOn(AppState, 'addEventListener');
+  listen.mockClear();
+  await setupUnlocked();
+  const change = listen.mock.calls[0][1];
+  act(() => change('background'));
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
+  expect(screen.queryByLabelText('Profile')).toBeNull();
+  expect(screen.getByText('Calendar locked')).toBeOnTheScreen();
+  await act(async () => change('active'));
+  expect(screen.getByText('Unlock your calendar')).toBeOnTheScreen();
+  expect(screen.queryByTestId('calendar-view-month')).toBeNull();
+  listen.mockRestore();
 });

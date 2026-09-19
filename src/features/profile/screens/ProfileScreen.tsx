@@ -4,9 +4,10 @@ import { useAuth } from '../../auth/AuthProvider';
 import { authErrorMessage } from '../../auth/services/authErrorMessage';
 import { Button, Typography } from '../../../shared/components';
 import { colors, radii, spacing } from '../../../shared/theme';
+import { BiometricSettings } from '../components/BiometricSettings';
 
 export function ProfileScreen() {
-  const { state, service } = useAuth();
+  const { state, service, busy } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const signingOut = useRef(false);
@@ -50,6 +51,7 @@ export function ProfileScreen() {
           {state.user?.id}
         </Typography>
       </View>
+      <BiometricSettings />
       {error ? (
         <Typography accessibilityRole="alert" variant="caption" tone="error">
           {error}
@@ -61,6 +63,7 @@ export function ProfileScreen() {
           void logout();
         }}
         loading={loading}
+        disabled={busy}
       />
     </ScrollView>
   );

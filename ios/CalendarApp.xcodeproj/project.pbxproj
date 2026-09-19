@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BA1000000000000000000001 /* CalendarBiometrics.m in Sources */ = {isa = PBXBuildFile; fileRef = BA1000000000000000000002 /* CalendarBiometrics.m */; };
+		BA1000000000000000000003 /* LocalAuthentication.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA1000000000000000000004 /* LocalAuthentication.framework */; };
 		0C80B921A6F3F58F76C31292 /* libPods-CalendarApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-CalendarApp.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -14,6 +16,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BA1000000000000000000002 /* CalendarBiometrics.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CalendarApp/CalendarBiometrics.m; sourceTree = "<group>"; };
+		BA1000000000000000000004 /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
 		13B07F961A680F5B00A75B9A /* CalendarApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CalendarApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CalendarApp/Info.plist; sourceTree = "<group>"; };
@@ -31,6 +35,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA1000000000000000000003 /* LocalAuthentication.framework in Frameworks */,
 				0C80B921A6F3F58F76C31292 /* libPods-CalendarApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -43,6 +48,7 @@
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				BA1000000000000000000002 /* CalendarBiometrics.m */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -54,6 +60,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				BA1000000000000000000004 /* LocalAuthentication.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-CalendarApp.a */,
 			);
 			name = Frameworks;
@@ -245,6 +252,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				BA1000000000000000000001 /* CalendarBiometrics.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

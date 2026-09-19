@@ -123,7 +123,8 @@ configuration; moving it does not rewrite Git history.
    of at least eight characters, and tap **Create account**.
 2. Successful registration signs you in and opens **Calendar**.
 3. Open **Profile** to see your email and Firebase account ID.
-4. Close and reopen the app: Firebase restores the saved session.
+4. Enable biometrics in Profile on a supported device. Close and reopen the app:
+   the restored session stays locked until biometric unlock or password sign-in.
 5. Tap **Logout** in Profile. You return to Sign in; Back must not reopen Profile.
 6. Reopen the app and sign in again with the same account.
 7. Try an incorrect password and an invalid email to see the error handling.
@@ -143,8 +144,10 @@ of an overnight event. Day view lists all events with full, wrapping titles.
 Tap an event to open its details sheet; tap a day in month/week view (or the
 month's `+N` count) to open that day's agenda. Storage failures show a retry action.
 The local event store is device-wide; it is not account-scoped or cloud synced.
-Meeting editing,
-biometrics, email verification, and password recovery are not implemented yet.
+Events can be edited from their details sheet. Biometric sign-in is available
+for previously authenticated users; see the [biometric guide](docs/biometric-sign-in.md)
+for setup, fallback behavior, security boundaries, and device checks.
+Email verification and password recovery are not implemented yet.
 Logout signs out this installation; it does not revoke sessions on other devices.
 
 ## Understand the code
@@ -187,9 +190,9 @@ not invent, display, or log tokens. A future custom API must validate the token 
 the server. For Firestore, ownership must be enforced using Security Rules.
 Hiding a screen is navigation behavior, not server authorization.
 
-Native storage currently restores the session without a biometric prompt.
-Biometrics will need a separate session-locking design; do not simply add a prompt
-that leaves an already-restored session accessible in the background.
+Native storage restores Firebase internally. The separate session gate keeps
+Calendar, Profile, and the application's token accessor locked until explicit
+authentication succeeds. Leaving the app revokes that local authorization.
 
 Reusable UI lives in `src/shared/components`. Feature behavior lives in
 `src/features/auth`, `calendar`, and `profile`. Extract components when there is a
@@ -223,7 +226,8 @@ Verified on September 17, 2026:
 - The disposable Firebase accounts created for verification were deleted.
 
 Physical-device and iOS verification are still pending. Emulator testing does
-not establish biometric behavior; biometrics are not implemented in this milestone.
+not establish biometric behavior. This historical milestone predates the
+[biometric session gate](docs/biometric-sign-in.md).
 
 The `.env` migration was verified on September 18, 2026: all 28 tests across six
 suites, TypeScript, ESLint, and formatting of changed files passed. An Android

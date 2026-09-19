@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native-stack';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { AuthScreen } from '../../features/auth/screens/AuthScreen';
+import { LockedSessionScreen } from '../../features/auth/screens/LockedSessionScreen';
 import { StatusScreen } from '../../shared/components';
 import { colors } from '../../shared/theme';
 import { MainNavigator } from './MainNavigator';
@@ -41,13 +42,19 @@ function SignUp({ navigation }: NativeStackScreenProps<RootRoutes, 'SignUp'>) {
 function MainRoute() {
   const { state } = useAuth();
 
-  return (
-    <MainNavigator key={state.status === 'signedIn' ? state.user.id : 'none'} />
-  );
+  return state.status === 'signedIn' ? (
+    <MainNavigator key={state.user.id} />
+  ) : null;
 }
 
 export function RootNavigator() {
-  const { state, retry } = useAuth();
+  const { state, retry, obscured } = useAuth();
+  if (obscured) {
+    return <StatusScreen title="Calendar locked" />;
+  }
+  if (state.status === 'locked') {
+    return <LockedSessionScreen />;
+  }
   if (state.status === 'loading') {
     return <StatusScreen title="Opening your calendar" loading />;
   }
@@ -60,10 +67,8 @@ export function RootNavigator() {
       />
     );
   }
-  // One stack holds both halves of the app, so signing in and out crossfades
-  // rather than snapping. Screens for the half you are not in are absent from
-  // the navigator entirely, which is what removes private navigation history
-  // on logout — the same guarantee the previous whole-tree swap gave.
+  // Preserve fade transitions for the credential flow. The lock/error branches
+  // above immediately unmount private screens and their navigation history.
   return (
     <NavigationContainer theme={theme}>
       <RootStack.Navigator

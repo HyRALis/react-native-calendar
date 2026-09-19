@@ -24,17 +24,29 @@ export function createFirebaseAuthService(auth: Auth): AuthService {
         onError,
       ),
     async signIn({ email, password }) {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const { user } = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      return { id: user.uid, email: user.email };
     },
     async signUp({ email, password }) {
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      return { id: user.uid, email: user.email };
     },
     async signOut() {
       await signOut(auth);
     },
-    async getIdToken() {
+    async getIdToken(forceRefresh = false) {
       // The SDK refreshes expired tokens. Never manufacture or log a token.
-      return auth.currentUser ? auth.currentUser.getIdToken() : null;
+      return auth.currentUser
+        ? auth.currentUser.getIdToken(forceRefresh)
+        : null;
     },
   };
 }
