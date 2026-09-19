@@ -93,6 +93,14 @@ android {
             keyPassword 'android'
         }
     }
+    // A debug APK carries native code for every ABI, so pushing it to a cold
+    // emulator can take minutes. The default install timeout gives up first and
+    // the run fails at :app:installDebug with ShellCommandUnresponsiveException
+    // even though the build itself succeeded.
+    installation {
+        timeOutInMs = 15 * 60 * 1000
+    }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug

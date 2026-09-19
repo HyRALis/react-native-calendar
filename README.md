@@ -28,6 +28,24 @@ npm run android
 Metro prepares the JavaScript. Gradle builds the native Android application.
 The first native build takes longer because it downloads build tools and libraries.
 
+A debug build packs native code for every CPU architecture, which makes the APK
+large and the install slow. To build and install only what the attached device
+actually runs:
+
+```powershell
+npm run android:fast
+```
+
+If `npm run android` fails at `:app:installDebug` with
+`ShellCommandUnresponsiveException`, the build succeeded and only the install
+timed out; a slow or cold emulator can take several minutes to accept a debug
+APK. `android/app/build.gradle` already allows fifteen minutes for this. Either
+wait it out, use the command above, or install the APK that was already built:
+
+```powershell
+adb install -r android\app\build\outputs\apk\debug\app-debug.apk
+```
+
 For a build without installing on a device:
 
 ```powershell
@@ -118,10 +136,14 @@ views. Month is the default. The selection stays active while switching tabs and
 resets after logout. The same menu on Profile returns to the chosen calendar view.
 Close it using **Close menu**, the backdrop, or Android Back.
 
-The initial layouts show today's hourly schedule, the current week's daily agenda,
-or a month grid with today highlighted. Weeks start on Monday. These are empty
-layouts; event data and browsing other dates are not implemented yet.
-Meeting creation/editing,
+The calendar supports browsing days, weeks, and months. Weeks start on Monday.
+Use **Add event** to enter a title, start, end, and optional description. Events
+persist locally on the device and appear in all three views, including each day
+of an overnight event. Day view lists all events with full, wrapping titles.
+Tap an event to open its details sheet; tap a day in month/week view (or the
+month's `+N` count) to open that day's agenda. Storage failures show a retry action.
+The local event store is device-wide; it is not account-scoped or cloud synced.
+Meeting editing,
 biometrics, email verification, and password recovery are not implemented yet.
 Logout signs out this installation; it does not revoke sessions on other devices.
 
