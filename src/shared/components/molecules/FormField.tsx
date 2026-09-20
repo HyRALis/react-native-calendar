@@ -18,7 +18,6 @@ export type FormFieldProps = TextInputProps & {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-/** Composes a label, input, and supporting text without owning form state or validation. */
 export const FormField = forwardRef<
   React.ComponentRef<typeof NativeTextInput>,
   FormFieldProps

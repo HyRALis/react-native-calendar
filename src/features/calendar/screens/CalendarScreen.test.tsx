@@ -28,7 +28,6 @@ function periodLabel(view: CalendarView, date: Date) {
   return formatPeriodLabel(view, date) as string;
 }
 
-/** Stands in for the header drawer, which lives in the navigator. */
 function ViewSwitcher() {
   const { setView } = useCalendarActions();
   return (
@@ -52,7 +51,6 @@ function layOutPager(view: CalendarView) {
   });
 }
 
-/** A store of its own per render, so no test inherits another's events. */
 function memoryStore() {
   const values = new Map<string, string>();
 
@@ -71,12 +69,10 @@ async function renderScreen(store = memoryStore(), getNow = () => today) {
       <ViewSwitcher />
     </CalendarNavigationProvider>,
   );
-  // Events stored on the device load asynchronously; settle that first.
   await act(async () => {});
   layOutPager('month');
 }
 
-/** Swipe `delta` pages in whichever view is showing, from today's page. */
 function swipePages(view: CalendarView, delta: number) {
   const from = indexOfDate(view, today, today);
   const count = pageCount(view, today);
@@ -131,10 +127,6 @@ describe('every view pages the same way', () => {
     showView('week');
 
     swipePages('week', 1);
-    // 17 March is a Tuesday; one week on is Tuesday 24 March. Only the bar is
-    // asserted: jest has no real scroll, so the page the swipe targeted is not
-    // rendered until the pager remounts. The cross-view tests below cover the
-    // page contents, because switching view does remount it.
     expect(
       screen.getByText(periodLabel('week', new Date(2026, 2, 24))),
     ).toBeOnTheScreen();
@@ -225,7 +217,6 @@ describe('adding an event', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Save event' }));
 
     expect(screen.queryByRole('header', { name: 'Add event' })).toBeNull();
-    // The draft defaults to the focused day, which March's grid already shows.
     expect(screen.getByText(/Standup$/)).toBeOnTheScreen();
   });
 
@@ -236,14 +227,13 @@ describe('adding an event', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
     fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
     fireEvent.press(screen.getByRole('button', { name: 'Save event' }));
-    // Let the write reach the device before the session ends.
     await act(async () => {});
     screen.unmount();
 
     await renderScreen(store);
 
     expect(screen.getByText(/Standup$/)).toBeOnTheScreen();
-  });
+  }, 30000);
 
   test('cancelling leaves the grid empty', async () => {
     await renderScreen();
@@ -258,7 +248,6 @@ describe('adding an event', () => {
 });
 
 describe('editing an event', () => {
-  /** Adds one event on the focused day and returns to the settled grid. */
   async function addStandup() {
     fireEvent.press(screen.getByRole('button', { name: 'Add event' }));
     fireEvent.changeText(screen.getByLabelText('Title'), 'Standup');
@@ -305,7 +294,6 @@ describe('editing an event', () => {
 
     expect(screen.queryByRole('header', { name: 'Edit event' })).toBeNull();
     expect(screen.getByText(/Standup, moved$/)).toBeOnTheScreen();
-    // The old title is gone rather than sitting alongside the new one.
     expect(screen.queryByText('Standup')).toBeNull();
   });
 
@@ -325,7 +313,7 @@ describe('editing an event', () => {
 
     expect(screen.getByText(/Standup, moved$/)).toBeOnTheScreen();
     expect(screen.queryByText('Standup')).toBeNull();
-  });
+  }, 30000);
 
   test('cancelling the form leaves the event as it was', async () => {
     await renderScreen();

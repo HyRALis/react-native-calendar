@@ -15,7 +15,6 @@ export type TypographyProps = TextProps & {
   tone?: keyof typeof tones;
 };
 
-/** Visual variants do not imply semantics: set accessibilityRole="header" for headings. */
 export const Typography = forwardRef<
   React.ComponentRef<typeof Text>,
   TypographyProps

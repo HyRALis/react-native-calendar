@@ -17,19 +17,12 @@ import {
 import { Typography } from './Typography';
 
 export type FloatingActionButtonProps = Omit<PressableProps, 'children'> & {
-  /** Decorative glyph; the pressable carries the label, so it stays out of a11y. */
   glyph?: string;
   accessibilityLabel: string;
   size?: ControlSize;
   glyphStyle?: StyleProp<TextStyle>;
 };
 
-/**
- * The screen's primary action, pinned to the bottom-right corner. It is
- * positioned absolutely within its parent, so placing it inside a screen that
- * ends at the tab bar already puts it above the tab bar. Pass `style` to move
- * it somewhere else.
- */
 export const FloatingActionButton = forwardRef<
   React.ComponentRef<typeof Pressable>,
   FloatingActionButtonProps

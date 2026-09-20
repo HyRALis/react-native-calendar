@@ -22,9 +22,9 @@ test('week starts on Monday and crosses year boundaries', () => {
 });
 
 test.each([
-  [2024, 1, 5, 29], // Leap February.
-  [2021, 1, 4, 28], // Monday start, exactly four weeks.
-  [2026, 2, 6, 31], // Sunday start, six-week month.
+  [2024, 1, 5, 29],
+  [2021, 1, 4, 28],
+  [2026, 2, 6, 31],
 ])(
   'month %i/%i includes every date once in complete weeks',
   (year, month, weekCount, dayCount) => {
@@ -60,9 +60,9 @@ test('startOfMonth normalises to the 1st at midday', () => {
 });
 
 test.each([
-  [new Date(2026, 0, 31), 1, 2026, 1], // Jan 31 + 1 month is February, never March.
-  [new Date(2026, 0, 15), -1, 2025, 11], // Backwards across a year boundary.
-  [new Date(2025, 11, 1), 1, 2026, 0], // Forwards across a year boundary.
+  [new Date(2026, 0, 31), 1, 2026, 1],
+  [new Date(2026, 0, 15), -1, 2025, 11],
+  [new Date(2025, 11, 1), 1, 2026, 0],
   [new Date(2024, 5, 10), 0, 2024, 5],
 ])('addMonths(%s, %i) lands on %i-%i', (date, months, year, month) => {
   const shifted = addMonths(date, months);

@@ -11,14 +11,8 @@ import {
   startOfWeek,
 } from './calendarDates';
 
-/**
- * How many years either side of the anchor the calendar can reach. Every view
- * pages over the same span of whole years, so switching view never strands you
- * on a date the new view cannot scroll to.
- */
 export const calendarYearRadius = 10;
 
-/** The first day in range: 1 January of the earliest year. */
 export function firstDayInRange(
   anchor: Date,
   yearRadius: number = calendarYearRadius,
@@ -26,7 +20,6 @@ export function firstDayInRange(
   return new Date(anchor.getFullYear() - yearRadius, 0, 1, 12);
 }
 
-/** The last day in range: 31 December of the latest year. */
 export function lastDayInRange(
   anchor: Date,
   yearRadius: number = calendarYearRadius,
@@ -34,7 +27,6 @@ export function lastDayInRange(
   return new Date(anchor.getFullYear() + yearRadius, 11, 31, 12);
 }
 
-/** The origin every page index for `view` is measured from. */
 export function firstPageInRange(
   view: CalendarView,
   anchor: Date,
@@ -42,8 +34,6 @@ export function firstPageInRange(
 ): Date {
   const first = firstDayInRange(anchor, yearRadius);
 
-  // Weeks start on the Monday on or before 1 January, so the first page holds
-  // that day rather than beginning mid-week.
   return view === 'week' ? startOfWeek(first) : first;
 }
 
@@ -64,7 +54,6 @@ export function pageCount(
   return view === 'day' ? span + 1 : Math.floor(span / 7) + 1;
 }
 
-/** Which page of `view` holds `date`. */
 export function indexOfDate(
   view: CalendarView,
   anchor: Date,
@@ -83,7 +72,6 @@ export function indexOfDate(
   }
 }
 
-/** Where page `index` of `view` starts: a month's 1st, a Monday, or the day. */
 export function dateAtIndex(
   view: CalendarView,
   anchor: Date,
@@ -131,7 +119,6 @@ export function clampMonthToRange(
     : startOfMonth(month);
 }
 
-/** Like `clampMonthToRange`, but keeps the day-of-month. */
 export function clampDateToRange(
   anchor: Date,
   date: Date,

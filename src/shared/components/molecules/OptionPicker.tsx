@@ -17,10 +17,6 @@ export type OptionPickerProps<T> = {
   closeLabel?: string;
 };
 
-/**
- * A single-choice list in a bottom sheet. Built from core primitives so no
- * picker dependency is needed, and generic so any feature can reuse it.
- */
 export function OptionPicker<T extends string | number>({
   visible,
   title,
@@ -73,7 +69,6 @@ export function OptionPicker<T extends string | number>({
 }
 
 const styles = StyleSheet.create({
-  /** Shrinks within the sheet's height cap so long lists scroll. */
   list: { flexShrink: 1 },
   options: { gap: spacing.xs, paddingBottom: spacing.sm },
   option: {

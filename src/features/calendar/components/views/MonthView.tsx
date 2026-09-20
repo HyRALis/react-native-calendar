@@ -12,7 +12,6 @@ import { eventsForDay } from '../../utils/calendarEvents';
 import { MonthDayCell } from './MonthDayCell';
 
 export type MonthViewProps = {
-  /** The month to render; only its year and month are read. */
   month: Date;
   today?: Date;
   selectedDate?: Date | null;
@@ -22,7 +21,6 @@ export type MonthViewProps = {
   onSelectEvent?: (event: CalendarEvent) => void;
 };
 
-/** One month as a full-height grid. Stateless: paging lives in MonthPager. */
 export function MonthView({
   month,
   today,

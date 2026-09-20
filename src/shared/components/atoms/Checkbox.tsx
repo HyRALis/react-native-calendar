@@ -9,7 +9,6 @@ export type CheckboxProps = Omit<PressableProps, 'children' | 'onPress'> & {
   onValueChange: (checked: boolean) => void;
 };
 
-/** Controlled checkbox. The caller owns the value and any visible label. */
 export const Checkbox = forwardRef<
   React.ComponentRef<typeof Pressable>,
   CheckboxProps

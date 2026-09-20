@@ -17,7 +17,6 @@ test('the day view names the weekday and the date', () => {
 });
 
 test('a week inside one month names that month once', () => {
-  // 16-22 March 2026.
   expect(formatPeriodLabel('week', wednesday)).toBe(
     `16 – ${new Date(2026, 2, 22, 12).toLocaleDateString(undefined, {
       day: 'numeric',
@@ -27,7 +26,6 @@ test('a week inside one month names that month once', () => {
 });
 
 test('a week crossing a month names both sides', () => {
-  // 30 March - 5 April 2026.
   const crossing = new Date(2026, 3, 1, 12);
   const options = { day: 'numeric', month: 'short' } as const;
 

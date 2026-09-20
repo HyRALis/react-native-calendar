@@ -49,7 +49,6 @@ export function AuthScreen({
     try {
       await (isSignUp ? service.signUp(values) : service.signIn(values));
       setPassword('');
-      // Firebase's subscription changes the navigator; no manual navigation.
     } catch (error) {
       setMessage(authErrorMessage(error));
     } finally {

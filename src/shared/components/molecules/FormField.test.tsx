@@ -62,8 +62,6 @@ test('forwards the native input ref, custom style, and secure entry options', ()
   const input = screen.getByLabelText('Account password');
   expect(input).toHaveStyle({ marginTop: 10 });
   expect(input).toHaveProp('secureTextEntry', true);
-  // Instance identity matters here: callers must receive the native input,
-  // not the field's surrounding View or an internal wrapper.
   expect(ref.current).toBe(screen.UNSAFE_getByType(NativeTextInput).instance);
   expect(ref.current?.focus).toEqual(expect.any(Function));
   unmount();

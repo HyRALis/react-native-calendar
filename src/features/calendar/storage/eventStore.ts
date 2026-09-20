@@ -6,7 +6,6 @@ import type { CalendarEvent } from '../types';
 
 export const eventsStorageKey = 'calendar.events';
 
-/** The wire shape: dates as ISO strings, because JSON has no date type. */
 type StoredEvent = {
   id: string;
   title: string;
@@ -32,12 +31,6 @@ export function serializeEvents(events: readonly CalendarEvent[]): string {
   return JSON.stringify(stored);
 }
 
-/**
- * Reads back what `serializeEvents` wrote. Anything else — a half-written
- * string, a value from an older shape, an entry with an unreadable date — is
- * dropped rather than thrown, so one bad record cannot cost the user the rest
- * of their calendar or stop the app from starting.
- */
 export function parseEvents(raw: string | null): CalendarEvent[] {
   if (!raw) {
     return [];
@@ -108,5 +101,4 @@ export function createEventStore(
   };
 }
 
-/** What the app uses; tests hand the hook a store of their own instead. */
 export const deviceEventStore = createEventStore();

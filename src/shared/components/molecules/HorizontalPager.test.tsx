@@ -16,7 +16,6 @@ function renderPager(index: number, onIndexChange = jest.fn()) {
       keyExtractor={item => item}
     />,
   );
-  // Fix the page width so the offset maths does not depend on the test window.
   fireEvent(screen.getByTestId('pager'), 'layout', {
     nativeEvent: { layout: { width: 300, height: 500, x: 0, y: 0 } },
   });

@@ -1,10 +1,6 @@
 import type { CalendarView } from '../types';
 import { getWeekDays, isSameMonth } from './calendarDates';
 
-/**
- * The exact period in focus, for views finer than the month name already shown
- * by the pickers. Returns null for the month view, which needs no second line.
- */
 export function formatPeriodLabel(
   view: CalendarView,
   date: Date,
@@ -23,7 +19,6 @@ export function formatPeriodLabel(
   }
 }
 
-/** A Monday-to-Sunday range, naming the month once when the week stays in it. */
 export function formatWeekRange(date: Date): string {
   const days = getWeekDays(date);
   const first = days[0];
@@ -45,7 +40,6 @@ export function formatWeekRange(date: Date): string {
   )} ${dash} ${last.toLocaleDateString(undefined, options)}`;
 }
 
-/** What one step means in each view, for arrow labels. */
 export const stepUnit: Record<CalendarView, string> = {
   day: 'day',
   week: 'week',

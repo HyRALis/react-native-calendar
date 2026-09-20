@@ -16,17 +16,10 @@ export type BottomSheetProps = {
   title: string;
   children: ReactNode;
   onClose: () => void;
-  /** Defaults to `Dismiss <title>`; override when the title reads awkwardly. */
   dismissLabel?: string;
   testID?: string;
 };
 
-/**
- * A panel that rises from the bottom edge and is only as tall as its content,
- * up to most of the screen. Built from core primitives so no sheet library is
- * needed. The caller owns the content; this owns the scrim, the safe area and
- * every way out: the backdrop, Android back, and the accessibility escape.
- */
 export function BottomSheet({
   visible,
   title,
@@ -64,8 +57,6 @@ export function BottomSheet({
             onPress={onClose}
             style={StyleSheet.absoluteFill}
           />
-          {/* box-none keeps the empty space above the panel tappable, so the
-              backdrop below still closes the sheet. */}
           <KeyboardAvoidingView
             style={styles.lift}
             pointerEvents="box-none"

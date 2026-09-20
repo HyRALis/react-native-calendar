@@ -27,14 +27,6 @@ export type HorizontalPagerProps<T> = {
   testID?: string;
 };
 
-/**
- * A controlled, snap-to-page horizontal list built from core RN only.
- *
- * `items` must keep a stable identity: a changing `data` array makes the list
- * re-measure and fight the controlled `index`. A gesture-origin ref stops the
- * feedback loop where a swipe sets state, the effect scrolls, and the scroll
- * reports another swipe.
- */
 export function HorizontalPager<T>({
   items,
   index,
@@ -85,7 +77,6 @@ export function HorizontalPager<T>({
     listRef.current?.scrollToIndex({ index: safeIndex, animated: true });
   }, [safeIndex]);
 
-  // Rotation and split-screen change the page size; realign without animating.
   useEffect(() => {
     listRef.current?.scrollToOffset({
       offset: settledIndexRef.current * pageWidth,
@@ -133,8 +124,6 @@ export function HorizontalPager<T>({
       windowSize={3}
       initialNumToRender={1}
       maxToRenderPerBatch={1}
-      // Known cause of blank pages in horizontal paging lists on Android, and
-      // with three pages mounted it saves nothing.
       removeClippedSubviews={false}
       onScrollToIndexFailed={({ averageItemLength, index: failed }) => {
         listRef.current?.scrollToOffset({

@@ -15,8 +15,6 @@ type NativeBiometrics = {
   cancel: () => void;
 };
 
-// This preference contains no password or token. Native authentication is
-// required on EVERY unlock; reading this value alone never grants access.
 export function createBiometricService(
   native: NativeBiometrics | undefined = NativeModules.CalendarBiometrics,
   storage = secureStorage,

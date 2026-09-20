@@ -7,7 +7,6 @@ import { formatEventDateTime } from '../utils/calendarEvents';
 
 export type EventDetailsSheetProps = {
   event: CalendarEvent;
-  /** Omitted where an event cannot be changed; the action is then hidden. */
   onEdit?: (event: CalendarEvent) => void;
   onClose: () => void;
 };

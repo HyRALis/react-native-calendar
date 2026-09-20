@@ -1,8 +1,3 @@
-/**
- * Which page a horizontal scroll settled on. Kept pure and free of any view so
- * the paging rule can be unit tested without simulating a gesture, and so it
- * can absorb iOS rubber-band (negative) and Android overscroll offsets.
- */
 export function pageIndexFromOffset(
   offsetX: number,
   pageWidth: number,

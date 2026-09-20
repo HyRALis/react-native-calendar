@@ -16,19 +16,13 @@ import {
 
 export type DatePickerSheetProps = {
   title: string;
-  /** The day currently set; the grid opens on its month. */
   value: Date;
   today?: Date;
-  /** Earliest choosable day; earlier ones are shown but cannot be picked. */
   minDate?: Date;
   onSelect: (day: Date) => void;
   onClose: () => void;
 };
 
-/**
- * A compact month grid for choosing one day. Mounted means open, so the grid
- * always opens on the month being edited instead of wherever it was last left.
- */
 export function DatePickerSheet({
   title,
   value,

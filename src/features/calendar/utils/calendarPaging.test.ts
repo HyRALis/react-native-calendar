@@ -45,7 +45,6 @@ test.each(views)('%s: index and page-start conversions round-trip', view => {
 test.each(views)('%s: pages are contiguous and cover the whole range', view => {
   const count = pageCount(view, anchor);
 
-  // The first page holds the first day, the last page holds the last day.
   expect(indexOfDate(view, anchor, firstDayInRange(anchor))).toBe(0);
   expect(indexOfDate(view, anchor, lastDayInRange(anchor))).toBe(count - 1);
 });
@@ -66,7 +65,6 @@ test('week pages start on Monday and advance seven days', () => {
   expect(isSameDay(dateAtIndex('week', anchor, 1), addDays(first, 7))).toBe(
     true,
   );
-  // Every day of a week resolves to the same page.
   const monday = new Date(2026, 2, 16, 12);
   Array.from({ length: 7 }, (_, offset) => addDays(monday, offset)).forEach(
     day => {

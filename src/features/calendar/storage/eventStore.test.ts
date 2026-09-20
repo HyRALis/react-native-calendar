@@ -15,7 +15,6 @@ const event: CalendarEvent = {
   description: 'Daily sync',
 };
 
-/** A storage that lives for one test, so nothing leaks between them. */
 function fakeStorage(seed?: string) {
   const values = new Map<string, string>();
 

@@ -8,8 +8,6 @@ import {
   FIREBASE_APP_ID,
 } from '@env';
 
-// Babel replaces @env imports with public configuration at build time.
-// Keep actual values in .env; see .env.example for the required variable names.
 export const firebaseConfig: FirebaseOptions = {
   apiKey: FIREBASE_API_KEY,
   authDomain: FIREBASE_AUTH_DOMAIN,

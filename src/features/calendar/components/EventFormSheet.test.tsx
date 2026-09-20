@@ -5,7 +5,6 @@ import { formatTimeOfDay } from '../utils/timeOfDay';
 import { EventFormSheet } from './EventFormSheet';
 
 const focused = new Date(2026, 2, 17, 12);
-/** Pinned so the default start does not depend on the clock the suite runs on. */
 const now = new Date(2026, 2, 17, 9, 47);
 
 function dateLabel(date: Date) {
@@ -117,8 +116,6 @@ test('moving the start day carries the end day with it', () => {
 test('an end that is not after the start is rejected', () => {
   const { onSubmit } = renderSheet();
 
-  // The end cannot be dragged before the start's day at all, so the only way
-  // left to break the rule is to land it exactly on the start.
   fireEvent.press(screen.getByRole('button', { name: 'Ends time' }));
   fireEvent.press(
     screen.getByRole('radio', { name: formatTimeOfDay(10 * 60) }),
@@ -174,7 +171,6 @@ describe('the past is out of reach', () => {
     const { onSubmit } = renderSheet();
     const later = new Date(2026, 2, 26, 12);
 
-    // A later day frees up the whole clock again, including this morning.
     fireEvent.press(screen.getByRole('button', { name: 'Starts date' }));
     fireEvent.press(
       screen.getByRole('button', {
@@ -186,7 +182,6 @@ describe('the past is out of reach', () => {
       screen.getByRole('radio', { name: formatTimeOfDay(8 * 60) }),
     );
 
-    // Coming back to today carries that morning time with it.
     fireEvent.press(screen.getByRole('button', { name: 'Starts date' }));
     fireEvent.press(
       screen.getByRole('button', {
@@ -293,7 +288,6 @@ describe('editing an event that already exists', () => {
   });
 
   test('an event that has already begun can still be saved unchanged', () => {
-    // 2pm event, edited at 6pm: it is in the past, but a typo must be fixable.
     const { onSubmit } = renderEdit(stored, new Date(2026, 2, 17, 18, 0));
 
     fireEvent.changeText(screen.getByLabelText('Title'), 'Standup, renamed');
@@ -309,7 +303,6 @@ describe('editing an event that already exists', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Starts date' }));
 
-    // Its own start day is the floor, so the day before is out of reach.
     expect(
       screen.getByRole('button', {
         name: new Date(2026, 2, 16, 12).toLocaleDateString(undefined, {

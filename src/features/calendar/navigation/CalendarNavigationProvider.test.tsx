@@ -62,8 +62,6 @@ test('actions keep one identity across state changes', () => {
   act(() => result.current.actions.goToNext());
   act(() => result.current.actions.setView('day'));
 
-  // Stable actions mean navigation-only consumers never re-render on a date
-  // change, and useCallback dependencies on them stay honest.
   expect(result.current.actions).toBe(first);
 });
 
@@ -96,6 +94,5 @@ test('the provider accepts a starting date and view', () => {
 
   expect(result.current.state.view).toBe('day');
   expect(result.current.state.focusedDate.getFullYear()).toBe(2027);
-  // today stays what it is, so the grid can still mark it.
   expect(isSameDay(result.current.state.today, today)).toBe(true);
 });

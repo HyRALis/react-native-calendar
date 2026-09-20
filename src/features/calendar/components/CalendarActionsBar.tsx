@@ -11,10 +11,8 @@ import { buildYearOptions } from '../utils/calendarPaging';
 
 export type CalendarActionsBarProps = {
   view: CalendarView;
-  /** The month the pickers show; the month containing the focused date. */
   month: Date;
   focusedDate: Date;
-  /** Origin of the selectable year range; defaults to today. */
   anchor?: Date;
   today?: Date;
   onChangeMonth: (month: Date) => void;
@@ -34,11 +32,6 @@ function monthOptions(year: number) {
   }));
 }
 
-/**
- * Month and year navigation for every view. The arrows step by whatever the
- * current view pages over, and they are not decoration: swiping is not operable
- * with a screen reader, so they are the accessible path between pages.
- */
 export function CalendarActionsBar({
   view,
   month,

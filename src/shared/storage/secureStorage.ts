@@ -1,7 +1,5 @@
 import * as Keychain from 'react-native-keychain';
 
-// Firebase accepts this three-method storage interface. Its serialized session
-// lives in native secure storage, not in a plaintext AsyncStorage database.
 export const secureStorage = {
   async getItem(key: string): Promise<string | null> {
     const credentials = await Keychain.getGenericPassword({

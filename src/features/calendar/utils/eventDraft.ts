@@ -6,7 +6,6 @@ import {
   minutesOfDay,
 } from './calendarDates';
 
-/** What the form holds. Strings stay unvalidated here so typing is never fought. */
 export type EventDraft = {
   title: string;
   description: string;
@@ -21,7 +20,6 @@ export type EventDraftErrors = {
 };
 
 export type EventDraftOptions = {
-  /** The clock the default start is rounded up from. */
   now?: Date;
   minuteStep?: number;
   durationMinutes?: number;
@@ -30,7 +28,6 @@ export type EventDraftOptions = {
 export const defaultMinuteStep = 15;
 export const defaultDurationMinutes = 60;
 
-/** Rounds up to the next whole `step` minutes, so a new event starts on a slot. */
 export function roundUpToStep(date: Date, step: number): Date {
   const safeStep = Math.max(1, Math.round(step));
 
@@ -41,12 +38,6 @@ export function roundUpToStep(date: Date, step: number): Date {
   return atTime(date, Math.ceil(minutes / safeStep) * safeStep);
 }
 
-/**
- * A blank draft on `day`, starting at the next free slot after the current
- * time of day. Picking a day in the grid and opening the form therefore lands
- * on that day rather than on today — unless that day has already passed, in
- * which case the draft starts now, because the past cannot be scheduled.
- */
 export function createEventDraft(
   day: Date,
   {
@@ -67,11 +58,6 @@ export function createEventDraft(
   };
 }
 
-/**
- * An existing event as a draft the form can edit. Stored events may have no
- * end — the form always shows one — so a missing end becomes the default
- * duration rather than leaving the field empty.
- */
 export function eventToDraft(
   event: CalendarEvent,
   durationMinutes = defaultDurationMinutes,
@@ -84,17 +70,10 @@ export function eventToDraft(
   };
 }
 
-/**
- * The earliest a draft for `event` may start. An event that has already begun
- * keeps its own start as the floor, so a typo in yesterday's meeting can still
- * be fixed; anything still to come is floored at now like a new event, so
- * nothing can be dragged backwards into the past.
- */
 export function earliestStartFor(event: CalendarEvent, now: Date): Date {
   return event.start.getTime() < now.getTime() ? event.start : now;
 }
 
-/** Moving the start carries the end along, so the duration is kept. */
 export function setDraftStart(draft: EventDraft, start: Date): EventDraft {
   const shift = start.getTime() - draft.start.getTime();
 
@@ -105,10 +84,6 @@ export function setDraftEnd(draft: EventDraft, end: Date): EventDraft {
   return { ...draft, end };
 }
 
-/**
- * `now` is read once when the form opens rather than on every keystroke, so a
- * draft does not turn invalid underneath someone who is still filling it in.
- */
 export function validateEventDraft(
   draft: EventDraft,
   now: Date = new Date(),
@@ -138,7 +113,6 @@ export function hasEventDraftErrors(errors: EventDraftErrors): boolean {
   return Boolean(errors.title || errors.start || errors.end);
 }
 
-/** The stored event: trimmed, with an empty description left off entirely. */
 export function draftToEvent(draft: EventDraft, id: string): CalendarEvent {
   const description = draft.description.trim();
   const event: CalendarEvent = {

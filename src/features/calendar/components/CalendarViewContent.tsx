@@ -9,7 +9,6 @@ import { WeekView } from './views/WeekView';
 
 export type CalendarViewContentProps = {
   view: CalendarView;
-  /** The focused date. Which page it lands on depends on the view. */
   date: Date;
   anchor?: Date;
   today?: Date;
@@ -20,7 +19,6 @@ export type CalendarViewContentProps = {
   onSelectEvent?: (event: CalendarEvent) => void;
 };
 
-/** Every view pages the same way; only the page contents differ. */
 export function CalendarViewContent({
   view,
   date,
@@ -47,7 +45,6 @@ export function CalendarViewContent({
         );
       }
 
-      // Day and week pages scroll vertically inside the horizontal pager.
       return (
         <ScrollView contentContainerStyle={styles.scroll}>
           {view === 'day' ? (

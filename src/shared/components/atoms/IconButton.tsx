@@ -16,14 +16,12 @@ import {
 import { Typography } from './Typography';
 
 export type IconButtonProps = Omit<PressableProps, 'children'> & {
-  /** Decorative glyph; the pressable carries the label, so it stays out of a11y. */
   glyph: string;
   accessibilityLabel: string;
   size?: ControlSize;
   glyphStyle?: StyleProp<TextStyle>;
 };
 
-/** A square tap target for compact actions where a titled Button would not fit. */
 export const IconButton = forwardRef<
   React.ComponentRef<typeof Pressable>,
   IconButtonProps

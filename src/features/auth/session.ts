@@ -17,7 +17,6 @@ type SessionSnapshot = {
   obscured: boolean;
 };
 
-/** Firebase identity and permission to expose it are deliberately separate. */
 export function createAuthSession(
   auth: AuthService,
   biometrics: BiometricService,
@@ -204,7 +203,6 @@ export function createAuthSession(
       return authenticated;
     } finally {
       operation = null;
-      // A successful request completed while backgrounded must still be locked.
       if (connected && user && authorizedId !== user.id) {
         publish({ state: { status: 'locked', user: null } });
         void inspect();
@@ -227,7 +225,6 @@ export function createAuthSession(
     operation = 'biometric';
     publish({ busy: true, message: null });
     try {
-      // Re-check persisted consent and availability, not just the button state.
       if (
         !(await biometrics.isEnabled(id)) ||
         !(await biometrics.availability())
@@ -242,7 +239,6 @@ export function createAuthSession(
         return;
       }
       if (accepted) {
-        // A local biometric match cannot revive an expired/revoked Firebase session.
         if (!(await auth.getIdToken(true))) {
           throw new Error('session unavailable');
         }
@@ -297,7 +293,6 @@ export function createAuthSession(
       }
       await biometrics.setEnabled(id, enabled);
       if (!current(version, id)) {
-        // Backgrounding/logout while saving cannot leave a late opt-in behind.
         if (enabled) {
           await biometrics.setEnabled(id, false);
         }
@@ -337,8 +332,6 @@ export function createAuthSession(
       message: null,
     });
     try {
-      // Clear opt-in first. Failure stays locked and is retryable, never a
-      // successful-looking logout followed by silent restoration next launch.
       if (id) {
         await biometrics.setEnabled(id, false);
       }
@@ -372,8 +365,6 @@ export function createAuthSession(
       }
       return;
     }
-    // Face ID temporarily makes iOS inactive. Keep its attempt alive but hide
-    // private content. An actual background transition ALWAYS invalidates it.
     if (
       next === 'inactive' &&
       (operation === 'biometric' || operation === 'settings')

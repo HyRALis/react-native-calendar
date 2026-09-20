@@ -54,7 +54,6 @@ test('the body prioritizes the title and exposes the time in the event button la
 
 test('more events than fit collapse into a +n row', () => {
   renderCell({ events: makeEvents(5) });
-  // Two events shown, the remaining three behind the counter: three rows total.
   expect(screen.getAllByText(/Standup number/)).toHaveLength(2);
   expect(screen.getByText('+3')).toBeOnTheScreen();
 });

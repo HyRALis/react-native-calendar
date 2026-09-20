@@ -1,4 +1,3 @@
-/** Use local calendar arithmetic so DST and UTC offsets do not shift dates. */
 export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
@@ -8,12 +7,10 @@ export function addDays(date: Date, days: number): Date {
   );
 }
 
-/** Weeks start on Monday. */
 export function startOfWeek(date: Date): Date {
   return addDays(date, -((date.getDay() + 6) % 7));
 }
 
-/** Which weekday a date falls on, 0 for Monday through 6 for Sunday. */
 export function dayOfWeekIndex(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
@@ -86,28 +83,22 @@ export function sameDayInMonth(month: Date, day: Date): Date {
   );
 }
 
-/** Minutes since midnight, the unit a time of day is chosen in. */
 export function minutesOfDay(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
 }
 
-/** The same calendar day at `minutes` past midnight; 1440 rolls into tomorrow. */
 export function atTime(day: Date, minutes: number): Date {
   return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
 }
 
-/** The calendar day of `day` with the time of day of `time`. */
 export function combineDateAndTime(day: Date, time: Date): Date {
   return atTime(day, minutesOfDay(time));
 }
 
-/** Elapsed minutes, so a duration survives a daylight-saving boundary. */
 export function addMinutes(date: Date, minutes: number): Date {
   return new Date(date.getTime() + minutes * 60 * 1000);
 }
 
-/** Whole days from `from` to `to`, negative when `to` is earlier. Both are
- * read at midday first, so daylight-saving shifts cannot round the result off. */
 export function differenceInDays(from: Date, to: Date): number {
   const dayMs = 24 * 60 * 60 * 1000;
 

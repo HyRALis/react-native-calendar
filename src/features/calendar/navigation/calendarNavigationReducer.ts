@@ -10,17 +10,10 @@ import {
 } from '../utils/calendarDates';
 import { clampDateToRange } from '../utils/calendarPaging';
 
-/**
- * One focused day and one view. Every view derives what it shows from the same
- * date — the month containing it, the week containing it, or the day itself —
- * so switching views can never land somewhere unrelated.
- */
 export type CalendarNavigationState = {
   view: CalendarView;
   focusedDate: Date;
-  /** The day it is, anchored at midday for safe arithmetic. */
   today: Date;
-  /** The instant it is, for the places a time of day matters. */
   now: Date;
   anchor: Date;
 };
@@ -56,7 +49,6 @@ export function createCalendarNavigationState({
   };
 }
 
-/** How far one step moves, in the unit the current view is measured in. */
 function step(state: CalendarNavigationState, delta: number): Date {
   switch (state.view) {
     case 'day':
@@ -71,11 +63,6 @@ function step(state: CalendarNavigationState, delta: number): Date {
   }
 }
 
-/**
- * Where the focused day lands when the pager settles on a page. Each view keeps
- * the part of the date it does not page over — the day-of-month for months, the
- * day-of-week for weeks — so swiping never silently resets your position.
- */
 function pageStart(state: CalendarNavigationState, pageDate: Date): Date {
   switch (state.view) {
     case 'day':
@@ -87,7 +74,6 @@ function pageStart(state: CalendarNavigationState, pageDate: Date): Date {
   }
 }
 
-/** Returns the same state when nothing moved, so consumers can skip renders. */
 function focus(
   state: CalendarNavigationState,
   date: Date,
@@ -119,8 +105,6 @@ export function calendarNavigationReducer(
         : { ...focused, view: action.view };
     }
 
-    // Paging the grid keeps the day-of-month, so the focused day travels with
-    // you and switching to the day view afterwards lands somewhere sensible.
     case 'goToMonth':
       return focus(state, sameDayInMonth(action.month, state.focusedDate));
 

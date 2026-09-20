@@ -24,10 +24,10 @@ function draft(overrides: Partial<EventDraft> = {}): EventDraft {
 
 test.each([
   [new Date(2026, 2, 17, 9, 47), new Date(2026, 2, 17, 10, 0)],
-  [new Date(2026, 2, 17, 9, 0), new Date(2026, 2, 17, 9, 0)], // Already on a slot.
+  [new Date(2026, 2, 17, 9, 0), new Date(2026, 2, 17, 9, 0)],
   [new Date(2026, 2, 17, 9, 0, 1), new Date(2026, 2, 17, 9, 15)],
   [new Date(2026, 2, 17, 9, 0, 0, 1), new Date(2026, 2, 17, 9, 15)],
-  [new Date(2026, 2, 17, 23, 58), new Date(2026, 2, 18, 0, 0)], // Rolls over.
+  [new Date(2026, 2, 17, 23, 58), new Date(2026, 2, 18, 0, 0)],
 ])('roundUpToStep(%s) is %s', (from, expected) => {
   expect(roundUpToStep(from, 15)).toEqual(expected);
 });

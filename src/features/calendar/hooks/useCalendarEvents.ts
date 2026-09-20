@@ -11,14 +11,11 @@ export type CalendarEventStore = {
   retry: () => void;
 };
 
-/** Merge pending additions after hydration and serialize whole-list writes. */
 export function useCalendarEvents(
   store: EventStore = deviceEventStore,
 ): CalendarEventStore {
   const [, refresh] = useReducer((version: number) => version + 1, 0);
   const [attempt, setAttempt] = useState(0);
-  // Each repository has its own state and queue; a late response from an old
-  // repository must never replace or persist the current repository's events.
   const session = useMemo(
     () => ({
       store,
@@ -60,7 +57,6 @@ export function useCalendarEvents(
     session.active = true;
     session.loaded = false;
 
-    // Retry waits for earlier writes before re-reading and merging by ID.
     session.writes
       .then(() => store.load())
       .then(stored => {
@@ -109,12 +105,6 @@ export function useCalendarEvents(
     [persist, session],
   );
 
-  /**
-   * Replaces an event in place, keeping its id and its position in the list.
-   * Because hydration merges by id and lets the session win, an edit made
-   * while a read is still in flight survives that read rather than being
-   * overwritten by the stored copy.
-   */
   const updateEvent = useCallback(
     (id: string, draft: EventDraft) => {
       const event = draftToEvent(draft, id);

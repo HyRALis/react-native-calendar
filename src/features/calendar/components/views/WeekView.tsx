@@ -8,7 +8,6 @@ import { eventsForDay } from '../../utils/calendarEvents';
 import { EventListItem } from '../EventListItem';
 
 export type WeekViewProps = {
-  /** Any day in the week to show. */
   date: Date;
   today?: Date;
   selectedDate?: Date | null;

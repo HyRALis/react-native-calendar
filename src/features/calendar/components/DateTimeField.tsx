@@ -21,22 +21,15 @@ import { buildTimeOptions } from '../utils/timeOfDay';
 import { DatePickerSheet } from './DatePickerSheet';
 
 export type DateTimeFieldProps = {
-  /** Names the field and both of its buttons, so keep it short: "Starts". */
   label: string;
   value: Date;
   onChange: (next: Date) => void;
   today?: Date;
-  /** The earliest moment this field may hold; earlier ones cannot be picked. */
   min?: Date;
   error?: string;
   minuteStep?: number;
 };
 
-/**
- * One moment split across two tap targets: the day and the time of day. Each
- * opens its own picker, so neither the keyboard nor a date format has to be
- * negotiated with the user.
- */
 export function DateTimeField({
   label,
   value,
@@ -55,7 +48,6 @@ export function DateTimeField({
     year: 'numeric',
   });
   const timeLabel = formatEventTime(value);
-  // Only the day in focus is floored: on a later day every slot is free again.
   const earliest =
     min && isSameDay(min, value)
       ? minutesOfDay(min) +
@@ -153,7 +145,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.surface,
   },
-  /** The date needs the room; the time is always short. */
   date: { flex: 1 },
   invalid: { borderColor: colors.error },
   pressed: { opacity: opacity.pressed },

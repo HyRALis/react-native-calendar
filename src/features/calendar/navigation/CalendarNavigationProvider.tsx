@@ -26,7 +26,6 @@ export type CalendarNavigationActions = {
   openWeek: (date: Date) => void;
   openMonth: (date: Date) => void;
   goToMonth: (month: Date) => void;
-  /** Settle on a page of the current view, keeping the rest of the date. */
   goToPage: (pageDate: Date) => void;
   goToToday: () => void;
   goToNext: () => void;

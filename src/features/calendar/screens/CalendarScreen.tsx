@@ -19,16 +19,10 @@ import type { EventStore } from '../storage/eventStore';
 import type { CalendarEvent } from '../types';
 
 export type CalendarScreenProps = {
-  /** Where events are read from and written back to; injectable for tests. */
   eventStore?: EventStore;
   getNow?: () => Date;
 };
 
-/**
- * Renders whatever the navigation context is focused on. The screen holds no
- * date state of its own, so the header drawer, the actions bar, swiping and day
- * taps all move the same focused date and stay in step across views.
- */
 export function CalendarScreen({
   eventStore,
   getNow = currentTime,
@@ -100,8 +94,6 @@ export function CalendarScreen({
         />
       </View>
 
-      {/* The screen ends where the tab bar begins, so pinning the button to the
-          bottom of the screen already clears the tabs. */}
       <FloatingActionButton
         accessibilityLabel="Add event"
         onPress={() => setAdding(getNow())}
@@ -114,7 +106,6 @@ export function CalendarScreen({
           now={adding}
           onSubmit={draft => {
             addEvent(draft);
-            // Move to the day it starts on, so the new event is in view.
             focusDate(draft.start);
             setAdding(null);
           }}

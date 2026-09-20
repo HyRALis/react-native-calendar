@@ -33,7 +33,6 @@ function fakeStore(initial: CalendarEvent[] = []): EventStore & {
   };
 }
 
-/** An empty store still resolves, so every render has a load to settle. */
 async function renderEvents(store: EventStore) {
   const view = renderHook(() => useCalendarEvents(store));
   await waitFor(() => expect(store.load).toHaveBeenCalled());
@@ -94,7 +93,6 @@ test('a load that fails leaves the calendar usable but stops writing', async () 
   });
 
   expect(result.current.events).toHaveLength(1);
-  // Nothing was read, so nothing is overwritten on the strength of a guess.
   expect(store.save).not.toHaveBeenCalled();
 });
 

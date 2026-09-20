@@ -43,7 +43,6 @@ export function createFirebaseAuthService(auth: Auth): AuthService {
       await signOut(auth);
     },
     async getIdToken(forceRefresh = false) {
-      // The SDK refreshes expired tokens. Never manufacture or log a token.
       return auth.currentUser
         ? auth.currentUser.getIdToken(forceRefresh)
         : null;

@@ -30,7 +30,6 @@ export const controlSizes = { sm: 44, md: 52, lg: 60 } as const;
 export type ControlSize = keyof typeof controlSizes;
 export const opacity = { pressed: 0.8, disabled: 0.55 } as const;
 
-/** Lift for surfaces that sit above the page rather than within it. */
 export const elevation = {
   floating: {
     shadowColor: colors.text,

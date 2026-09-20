@@ -35,10 +35,6 @@ function SignUp({ navigation }: NativeStackScreenProps<RootRoutes, 'SignUp'>) {
     <AuthScreen mode="signUp" onSwitch={() => navigation.replace('SignIn')} />
   );
 }
-/**
- * Keyed by account, so a session that changes hands starts the calendar over
- * instead of inheriting the previous user's view.
- */
 function MainRoute() {
   const { state } = useAuth();
 
@@ -67,8 +63,6 @@ export function RootNavigator() {
       />
     );
   }
-  // Preserve fade transitions for the credential flow. The lock/error branches
-  // above immediately unmount private screens and their navigation history.
   return (
     <NavigationContainer theme={theme}>
       <RootStack.Navigator
@@ -77,8 +71,6 @@ export function RootNavigator() {
         {state.status === 'signedIn' ? (
           <RootStack.Screen name="Main" component={MainRoute} />
         ) : (
-          // Signing in and signing up are the same form in two modes, so they
-          // crossfade too rather than sliding as though one followed the other.
           <>
             <RootStack.Screen name="SignIn" component={SignIn} />
             <RootStack.Screen name="SignUp" component={SignUp} />

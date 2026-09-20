@@ -3,12 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { MonthView } from './MonthView';
 
 test.each([
-  [new Date(2021, 1, 15), 4], // February 2021 starts on a Monday: four rows.
-  [new Date(2024, 1, 15), 5], // Leap February.
-  [new Date(2026, 2, 15), 6], // Sunday start spills into a sixth row.
+  [new Date(2021, 1, 15), 4],
+  [new Date(2024, 1, 15), 5],
+  [new Date(2026, 2, 15), 6],
 ])('%s renders %i week rows that each flex to fill', (month, weekCount) => {
   render(<MonthView month={month} />);
-  // 7 weekday labels + 7 cells per week row.
   expect(screen.getAllByRole('button')).toHaveLength(weekCount * 7);
 });
 
@@ -51,7 +50,6 @@ test('today is marked only when it falls inside the rendered month', () => {
 
 test('pressing a trailing day reports a day in the next month', () => {
   const onSelectDay = jest.fn();
-  // March 2026 ends on a Tuesday, so the last row trails into April.
   render(<MonthView month={new Date(2026, 2, 15)} onSelectDay={onSelectDay} />);
   fireEvent.press(
     screen.getByLabelText(

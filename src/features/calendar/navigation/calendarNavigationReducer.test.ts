@@ -126,7 +126,6 @@ test('an action that changes nothing returns the same state object', () => {
   expect(reduce(state, { type: 'goToToday' })).toBe(state);
 });
 
-// The reason the provider exists: views must agree on where you are.
 describe('seamless navigation between views', () => {
   test('a day opened from the month view shows that exact day', () => {
     const inMay = reduce(initial(), {
@@ -194,7 +193,6 @@ describe('settling on a page keeps the part of the date the view does not page',
   });
 
   test('a week page keeps the day of the week', () => {
-    // 17 March 2026 is a Tuesday; the week of 4 May starts Monday the 4th.
     const inWeek = reduce(initial(), { type: 'setView', view: 'week' });
     const state = reduce(inWeek, {
       type: 'goToPage',

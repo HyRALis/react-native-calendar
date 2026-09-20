@@ -9,10 +9,6 @@ export const calendarViews: ReadonlyArray<{
   { value: 'month', label: 'Month' },
 ];
 
-/**
- * One scheduled entry. Kept free of any storage concern so the views can be fed
- * from a prop today and a real repository later without changing a component.
- */
 export type CalendarEvent = {
   id: string;
   title: string;

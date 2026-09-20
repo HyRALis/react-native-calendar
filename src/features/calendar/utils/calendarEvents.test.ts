@@ -41,8 +41,8 @@ test('an overnight event appears on every overlapping day, excluding its midnigh
 test.each([
   [0, 0, 0],
   [1, 1, 0],
-  [3, 3, 0], // Exactly three still shows every event.
-  [4, 2, 2], // A fourth event costs the last row; +n counts the two it hides.
+  [3, 3, 0],
+  [4, 2, 2],
   [7, 2, 5],
 ])(
   '%i events render %i rows and hide %i behind the overflow',
@@ -54,7 +54,6 @@ test.each([
 
     expect(summary.visible).toHaveLength(visible);
     expect(summary.overflowCount).toBe(overflowCount);
-    // The body never grows past its row budget.
     expect(
       summary.visible.length + (summary.overflowCount > 0 ? 1 : 0),
     ).toBeLessThanOrEqual(3);

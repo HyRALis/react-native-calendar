@@ -27,7 +27,6 @@ function renderCalendarScreen() {
   return <CalendarScreen />;
 }
 
-/** The provider unmounts with the tabs, so logout clears the session's view. */
 export function MainNavigator() {
   return (
     <CalendarNavigationProvider>
@@ -47,9 +46,6 @@ function MainTabs() {
         screenOptions={({ navigation, route }) => ({
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.muted,
-          // Crossfade rather than shift: the calendar already uses horizontal
-          // motion to mean "another month", and a sliding tab change would
-          // borrow that meaning for something else.
           animation: 'fade',
           header: () => (
             <>
