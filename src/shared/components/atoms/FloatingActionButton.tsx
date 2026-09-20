@@ -64,6 +64,7 @@ export const FloatingActionButton = forwardRef<
 const styles = StyleSheet.create({
   base: {
     position: 'absolute',
+    zIndex: 1,
     right: spacing.xl,
     bottom: spacing.xl,
     alignItems: 'center',

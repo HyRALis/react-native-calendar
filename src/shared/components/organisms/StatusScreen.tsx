@@ -1,5 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../atoms/Button';
 import { Typography } from '../atoms/Typography';
 import { colors, spacing } from '../../theme';
@@ -18,30 +19,33 @@ export function StatusScreen({
   onRetry,
 }: StatusScreenProps) {
   return (
-    <View style={styles.screen}>
-      {loading && <ActivityIndicator size="large" color={colors.primary} />}
-      <Typography
-        accessibilityRole="header"
-        variant="title"
-        style={styles.centered}
-      >
-        {title}
-      </Typography>
-      {message && (
-        <Typography tone="muted" style={styles.centered}>
-          {message}
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.screen}>
+        {loading && <ActivityIndicator size="large" color={colors.primary} />}
+        <Typography
+          accessibilityRole="header"
+          variant="title"
+          style={styles.centered}
+        >
+          {title}
         </Typography>
-      )}
-      {onRetry && (
-        <Button title="Try again" onPress={onRetry} loading={loading} />
-      )}
-    </View>
+        {message && (
+          <Typography tone="muted" style={styles.centered}>
+            {message}
+          </Typography>
+        )}
+        {onRetry && (
+          <Button title="Try again" onPress={onRetry} loading={loading} />
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   screen: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',

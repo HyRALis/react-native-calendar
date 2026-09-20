@@ -10,6 +10,7 @@ import { LockedSessionScreen } from '../../features/auth/screens/LockedSessionSc
 import { StatusScreen } from '../../shared/components';
 import { colors } from '../../shared/theme';
 import { MainNavigator } from './MainNavigator';
+import { useReducedMotion } from '../../shared/hooks/useReducedMotion';
 
 type RootRoutes = { SignIn: undefined; SignUp: undefined; Main: undefined };
 const RootStack = createNativeStackNavigator<RootRoutes>();
@@ -44,6 +45,7 @@ function MainRoute() {
 }
 
 export function RootNavigator() {
+  const reducedMotion = useReducedMotion();
   const { state, retry, obscured } = useAuth();
   if (obscured) {
     return <StatusScreen title="Calendar locked" />;
@@ -66,7 +68,10 @@ export function RootNavigator() {
   return (
     <NavigationContainer theme={theme}>
       <RootStack.Navigator
-        screenOptions={{ headerShown: false, animation: 'fade' }}
+        screenOptions={{
+          headerShown: false,
+          animation: reducedMotion ? 'none' : 'fade',
+        }}
       >
         {state.status === 'signedIn' ? (
           <RootStack.Screen name="Main" component={MainRoute} />

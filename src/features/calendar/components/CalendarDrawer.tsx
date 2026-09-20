@@ -11,6 +11,7 @@ import {
   spacing,
 } from '../../../shared/theme';
 import { calendarViews, type CalendarView } from '../types';
+import { useReducedMotion } from '../../../shared/hooks/useReducedMotion';
 
 export type CalendarDrawerProps = {
   visible: boolean;
@@ -25,6 +26,7 @@ export function CalendarDrawer({
   onSelectView,
   onClose,
 }: CalendarDrawerProps) {
+  const reducedMotion = useReducedMotion();
   if (!visible) {
     return null;
   }
@@ -33,7 +35,7 @@ export function CalendarDrawer({
     <Modal
       transparent
       visible
-      animationType="fade"
+      animationType={reducedMotion ? 'none' : 'fade'}
       statusBarTranslucent
       navigationBarTranslucent
       supportedOrientations={['portrait', 'landscape']}

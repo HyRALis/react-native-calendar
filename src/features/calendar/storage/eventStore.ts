@@ -4,7 +4,17 @@ import {
 } from '../../../shared/storage/appStorage';
 import type { CalendarEvent } from '../types';
 
-export const eventsStorageKey = 'calendar.events';
+export function eventsStorageKey(accountId: string): string {
+  if (!accountId.trim()) {
+    throw new Error('An authenticated account is required for event storage.');
+  }
+  return `calendar.events.v2.${encodeURIComponent(accountId)}`;
+}
+
+const pendingWrites = new WeakMap<
+  KeyValueStorage,
+  Map<string, Promise<void>>
+>();
 
 type StoredEvent = {
   id: string;
@@ -92,13 +102,34 @@ function toDate(value: unknown): Date | null {
 }
 
 export function createEventStore(
+  accountId: string,
   storage: KeyValueStorage = appStorage,
-  key: string = eventsStorageKey,
 ): EventStore {
+  const key = eventsStorageKey(accountId);
+  let queues = pendingWrites.get(storage);
+  if (!queues) {
+    queues = new Map();
+    pendingWrites.set(storage, queues);
+  }
+  const accountQueues = queues;
   return {
-    load: async () => parseEvents(await storage.getItem(key)),
-    save: events => storage.setItem(key, serializeEvents(events)),
+    load: async () => {
+      await accountQueues.get(key);
+      return parseEvents(await storage.getItem(key));
+    },
+    save: events => {
+      const serialized = serializeEvents(events);
+      const write = (accountQueues.get(key) ?? Promise.resolve()).then(() =>
+        storage.setItem(key, serialized),
+      );
+      const settled = write.catch(() => {});
+      accountQueues.set(key, settled);
+      void settled.then(() => {
+        if (accountQueues.get(key) === settled) {
+          accountQueues.delete(key);
+        }
+      });
+      return write;
+    },
   };
 }
-
-export const deviceEventStore = createEventStore();

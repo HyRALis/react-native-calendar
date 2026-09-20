@@ -19,7 +19,7 @@ function fakeStorage(seed?: string) {
   const values = new Map<string, string>();
 
   if (seed !== undefined) {
-    values.set(eventsStorageKey, seed);
+    values.set(eventsStorageKey('alice'), seed);
   }
 
   return {
@@ -83,17 +83,17 @@ test('unreadable records are dropped and the rest are kept', () => {
 test('saving writes one JSON value under the calendar key', async () => {
   const storage = fakeStorage();
 
-  await createEventStore(storage).save([event]);
+  await createEventStore('alice', storage).save([event]);
 
   expect(storage.setItem).toHaveBeenCalledWith(
-    eventsStorageKey,
+    eventsStorageKey('alice'),
     serializeEvents([event]),
   );
 });
 
 test('loading reads back exactly what saving wrote', async () => {
   const storage = fakeStorage();
-  const store = createEventStore(storage);
+  const store = createEventStore('alice', storage);
 
   await store.save([event]);
 
@@ -101,5 +101,59 @@ test('loading reads back exactly what saving wrote', async () => {
 });
 
 test('loading a device that has never saved gives an empty calendar', async () => {
-  expect(await createEventStore(fakeStorage()).load()).toEqual([]);
+  expect(await createEventStore('alice', fakeStorage()).load()).toEqual([]);
+});
+
+test('accounts have separate calendars and retain their events after signing back in', async () => {
+  const storage = fakeStorage();
+  await createEventStore('alice', storage).save([event]);
+  expect(await createEventStore('bob', storage).load()).toEqual([]);
+  const bobEvent = { ...event, title: 'Bob only' };
+  await createEventStore('bob', storage).save([bobEvent]);
+  expect(await createEventStore('alice', storage).load()).toEqual([event]);
+  expect(await createEventStore('bob', storage).load()).toEqual([bobEvent]);
+});
+
+test('unowned legacy events are not imported into any account or deleted', async () => {
+  const storage = fakeStorage();
+  storage.values.set('calendar.events', serializeEvents([event]));
+  expect(await createEventStore('alice', storage).load()).toEqual([]);
+  expect(await createEventStore('bob', storage).load()).toEqual([]);
+  expect(storage.values.get('calendar.events')).toBe(serializeEvents([event]));
+});
+
+test('account identifiers cannot collide through separators or escaping', () => {
+  expect(eventsStorageKey('a/b')).not.toBe(eventsStorageKey('a%2Fb'));
+  expect(() => createEventStore(' ')).toThrow(/authenticated account/);
+});
+
+test('a remounted account waits for an earlier write without blocking another account', async () => {
+  const storage = fakeStorage();
+  let complete!: () => void;
+  storage.setItem.mockImplementationOnce(
+    (key, value) =>
+      new Promise<void>(resolve => {
+        complete = () => {
+          storage.values.set(key, value);
+          resolve();
+        };
+      }),
+  );
+  const write = createEventStore('alice', storage).save([event]);
+  await Promise.resolve();
+  const remounted = createEventStore('alice', storage).load();
+  expect(await createEventStore('bob', storage).load()).toEqual([]);
+  complete();
+  await write;
+  expect(await remounted).toEqual([event]);
+});
+
+test('a failed write rejects but does not poison future saves for that account', async () => {
+  const storage = fakeStorage();
+  storage.setItem.mockRejectedValueOnce(new Error('full'));
+  await expect(
+    createEventStore('alice', storage).save([event]),
+  ).rejects.toThrow('full');
+  await createEventStore('alice', storage).save([event]);
+  expect(await createEventStore('alice', storage).load()).toEqual([event]);
 });

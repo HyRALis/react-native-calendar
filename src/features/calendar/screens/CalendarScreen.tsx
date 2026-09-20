@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ViewTransition } from '../../../shared/components/molecules/ViewTransition';
 import {
   Button,
   FloatingActionButton,
@@ -19,7 +21,7 @@ import type { EventStore } from '../storage/eventStore';
 import type { CalendarEvent } from '../types';
 
 export type CalendarScreenProps = {
-  eventStore?: EventStore;
+  eventStore: EventStore;
   getNow?: () => Date;
 };
 
@@ -51,7 +53,7 @@ export function CalendarScreen({
   } | null>(null);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView edges={['left', 'right']} style={styles.screen}>
       {error ? (
         <View style={styles.error}>
           <Typography
@@ -81,17 +83,19 @@ export function CalendarScreen({
         onToday={goToToday}
       />
       <View style={styles.content} testID={`calendar-view-${view}`}>
-        <CalendarViewContent
-          view={view}
-          date={focusedDate}
-          anchor={anchor}
-          today={today}
-          selectedDate={focusedDate}
-          events={events}
-          onChangeDate={goToPage}
-          onSelectDay={openDay}
-          onSelectEvent={setSelectedEvent}
-        />
+        <ViewTransition key={view}>
+          <CalendarViewContent
+            view={view}
+            date={focusedDate}
+            anchor={anchor}
+            today={today}
+            selectedDate={focusedDate}
+            events={events}
+            onChangeDate={goToPage}
+            onSelectDay={openDay}
+            onSelectEvent={setSelectedEvent}
+          />
+        </ViewTransition>
       </View>
 
       <FloatingActionButton
@@ -135,7 +139,7 @@ export function CalendarScreen({
           onClose={() => setEditing(null)}
         />
       ) : null}
-    </View>
+    </SafeAreaView>
   );
 }
 

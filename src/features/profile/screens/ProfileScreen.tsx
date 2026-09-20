@@ -5,6 +5,7 @@ import { authErrorMessage } from '../../auth/services/authErrorMessage';
 import { Button, Typography } from '../../../shared/components';
 import { colors, radii, spacing } from '../../../shared/theme';
 import { BiometricSettings } from '../components/BiometricSettings';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function ProfileScreen() {
   const { state, service, busy } = useAuth();
@@ -28,47 +29,50 @@ export function ProfileScreen() {
     }
   }
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Typography
-        accessibilityRole="header"
-        variant="heading"
-        style={styles.title}
-      >
-        Your profile
-      </Typography>
-      <Typography tone="muted">Your account, all in one place.</Typography>
-      <View style={styles.card}>
-        <Typography variant="overline" tone="muted">
-          EMAIL ADDRESS
+    <SafeAreaView edges={['left', 'right']} style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Typography
+          accessibilityRole="header"
+          variant="heading"
+          style={styles.title}
+        >
+          Your profile
         </Typography>
-        <Typography selectable style={styles.email}>
-          {state.user?.email ?? 'No email address'}
-        </Typography>
-        <Typography variant="overline" tone="muted">
-          ACCOUNT ID
-        </Typography>
-        <Typography selectable variant="caption" tone="muted">
-          {state.user?.id}
-        </Typography>
-      </View>
-      <BiometricSettings />
-      {error ? (
-        <Typography accessibilityRole="alert" variant="caption" tone="error">
-          {error}
-        </Typography>
-      ) : null}
-      <Button
-        title="Logout"
-        onPress={() => {
-          void logout();
-        }}
-        loading={loading}
-        disabled={busy}
-      />
-    </ScrollView>
+        <Typography tone="muted">Your account, all in one place.</Typography>
+        <View style={styles.card}>
+          <Typography variant="overline" tone="muted">
+            EMAIL ADDRESS
+          </Typography>
+          <Typography selectable style={styles.email}>
+            {state.user?.email ?? 'No email address'}
+          </Typography>
+          <Typography variant="overline" tone="muted">
+            ACCOUNT ID
+          </Typography>
+          <Typography selectable variant="caption" tone="muted">
+            {state.user?.id}
+          </Typography>
+        </View>
+        <BiometricSettings />
+        {error ? (
+          <Typography accessibilityRole="alert" variant="caption" tone="error">
+            {error}
+          </Typography>
+        ) : null}
+        <Button
+          title="Logout"
+          onPress={() => {
+            void logout();
+          }}
+          loading={loading}
+          disabled={busy}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   content: {
     flexGrow: 1,
     backgroundColor: colors.background,

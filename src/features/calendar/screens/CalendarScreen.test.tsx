@@ -54,7 +54,7 @@ function layOutPager(view: CalendarView) {
 function memoryStore() {
   const values = new Map<string, string>();
 
-  return createEventStore({
+  return createEventStore('test-account', {
     getItem: async key => values.get(key) ?? null,
     setItem: async (key, value) => {
       values.set(key, value);

@@ -10,6 +10,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../../theme';
 import { Typography } from '../atoms/Typography';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export type BottomSheetProps = {
   visible: boolean;
@@ -28,6 +29,7 @@ export function BottomSheet({
   dismissLabel,
   testID,
 }: BottomSheetProps) {
+  const reducedMotion = useReducedMotion();
   if (!visible) {
     return null;
   }
@@ -36,7 +38,7 @@ export function BottomSheet({
     <Modal
       transparent
       visible
-      animationType="slide"
+      animationType={reducedMotion ? 'none' : 'slide'}
       statusBarTranslucent
       navigationBarTranslucent
       supportedOrientations={['portrait', 'landscape']}
@@ -57,19 +59,25 @@ export function BottomSheet({
             onPress={onClose}
             style={StyleSheet.absoluteFill}
           />
-          <KeyboardAvoidingView
+          <SafeAreaView
+            edges={['top', 'left', 'right']}
             style={styles.lift}
             pointerEvents="box-none"
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-            <SafeAreaView edges={['bottom']} style={styles.panel}>
-              <View style={styles.grabber} />
-              <Typography variant="title" accessibilityRole="header">
-                {title}
-              </Typography>
-              {children}
-            </SafeAreaView>
-          </KeyboardAvoidingView>
+            <KeyboardAvoidingView
+              style={styles.lift}
+              pointerEvents="box-none"
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <SafeAreaView edges={['bottom']} style={styles.panel}>
+                <View style={styles.grabber} />
+                <Typography variant="title" accessibilityRole="header">
+                  {title}
+                </Typography>
+                {children}
+              </SafeAreaView>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
         </View>
       </SafeAreaProvider>
     </Modal>

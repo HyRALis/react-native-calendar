@@ -16,6 +16,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import { clampIndex, pageIndexFromOffset } from '../../utils/paging';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export type HorizontalPagerProps<T> = {
   items: readonly T[];
@@ -36,6 +37,7 @@ export function HorizontalPager<T>({
   extraData,
   testID,
 }: HorizontalPagerProps<T>) {
+  const reducedMotion = useReducedMotion();
   const listRef = useRef<FlatList<T>>(null);
   const settledIndexRef = useRef(index);
   const { width: windowWidth } = useWindowDimensions();
@@ -74,8 +76,11 @@ export function HorizontalPager<T>({
     }
 
     settledIndexRef.current = safeIndex;
-    listRef.current?.scrollToIndex({ index: safeIndex, animated: true });
-  }, [safeIndex]);
+    listRef.current?.scrollToIndex({
+      index: safeIndex,
+      animated: !reducedMotion,
+    });
+  }, [safeIndex, reducedMotion]);
 
   useEffect(() => {
     listRef.current?.scrollToOffset({

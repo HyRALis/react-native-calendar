@@ -1,4 +1,7 @@
 /* eslint-env jest */
+require('react-native').AccessibilityInfo.isReduceMotionEnabled.mockResolvedValue(
+  true,
+);
 jest.mock(
   'react-native-safe-area-context',
   () => require('react-native-safe-area-context/jest/mock').default,

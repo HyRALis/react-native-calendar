@@ -11,6 +11,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/features/auth/AuthProvider';
 import { RootNavigator } from '../src/app/navigation/RootNavigator';
 import type { AuthService, AuthUser } from '../src/features/auth/types';
+import { appStorage } from '../src/shared/storage/appStorage';
+import {
+  eventsStorageKey,
+  serializeEvents,
+} from '../src/features/calendar/storage/eventStore';
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -60,7 +65,13 @@ function setup(initialUser: AuthUser | null = null) {
       </AuthProvider>
     </SafeAreaProvider>,
   );
-  return { service, biometrics, unsubscribe, ...result };
+  return {
+    service,
+    biometrics,
+    unsubscribe,
+    emit: (next: AuthUser | null) => emit(next),
+    ...result,
+  };
 }
 
 async function setupUnlocked() {
@@ -268,7 +279,7 @@ test('Profile can disable and enable biometric sign-in', async () => {
 });
 
 test('backgrounding removes private screens and foregrounding requires unlock', async () => {
-  const listen = jest.spyOn(AppState, 'addEventListener');
+  const listen = jest.mocked(AppState.addEventListener);
   listen.mockClear();
   await setupUnlocked();
   const change = listen.mock.calls[0][1];
@@ -279,5 +290,34 @@ test('backgrounding removes private screens and foregrounding requires unlock', 
   await act(async () => change('active'));
   expect(screen.getByText('Unlock your calendar')).toBeOnTheScreen();
   expect(screen.queryByTestId('calendar-view-month')).toBeNull();
-  listen.mockRestore();
+  listen.mockClear();
+});
+
+test('switching accounts hides the previous calendar and returning restores only its events', async () => {
+  const start = new Date();
+  const alice = { id: 'alice-isolation', email: 'alice@example.com' };
+  const bob = { id: 'bob-isolation', email: 'bob@example.com' };
+  await appStorage.setItem(
+    eventsStorageKey(alice.id),
+    serializeEvents([
+      { id: 'alice-event', title: 'Alice private appointment', start },
+    ]),
+  );
+  const { emit } = setup(alice);
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByText('Alice private appointment');
+  await act(async () => emit(bob));
+  expect(screen.queryByText('Alice private appointment')).toBeNull();
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByTestId('calendar-view-month');
+  expect(screen.queryByText('Alice private appointment')).toBeNull();
+  await act(async () => emit(alice));
+  fireEvent.press(
+    await screen.findByRole('button', { name: 'Unlock with Biometrics' }),
+  );
+  await screen.findByText('Alice private appointment');
 });

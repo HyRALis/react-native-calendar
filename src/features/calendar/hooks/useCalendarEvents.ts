@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { deviceEventStore, type EventStore } from '../storage/eventStore';
+import type { EventStore } from '../storage/eventStore';
 import type { CalendarEvent } from '../types';
 import { draftToEvent, type EventDraft } from '../utils/eventDraft';
 
@@ -11,9 +11,7 @@ export type CalendarEventStore = {
   retry: () => void;
 };
 
-export function useCalendarEvents(
-  store: EventStore = deviceEventStore,
-): CalendarEventStore {
+export function useCalendarEvents(store: EventStore): CalendarEventStore {
   const [, refresh] = useReducer((version: number) => version + 1, 0);
   const [attempt, setAttempt] = useState(0);
   const session = useMemo(
