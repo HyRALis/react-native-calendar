@@ -1,0 +1,77 @@
+{
+  "capturedOn": "2026-09-20",
+  "method": "adb exec-out screencap -p",
+  "edited": false,
+  "files": [
+    {
+      "file": "android/01-sign-in.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 127496,
+      "sha256": "fcd845aa94413d68f0bd9631cbaf0e80d82b058f15866f577e35bd5787021fce"
+    },
+    {
+      "file": "android/02-registration.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 129652,
+      "sha256": "47cced90fc21b9dd357a6460043912f14c054c728d0fbcc6d3d56051fdfef212"
+    },
+    {
+      "file": "android/03-month.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 111308,
+      "sha256": "9e3e444bf28ee0ced4cbffcd92ff181cefd902007e338a7cf071d21452588b6b"
+    },
+    {
+      "file": "android/04-week.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 173940,
+      "sha256": "137aac462704f28b0bc9e4c681e82291c98a4bd0b6118938684e97865455fa9d"
+    },
+    {
+      "file": "android/05-day.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 115513,
+      "sha256": "697d2ecbe80e7e455c7337fa054973237d3072aa46609c97563ba9df50ba00cf"
+    },
+    {
+      "file": "android/06-add-event.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 159842,
+      "sha256": "058f8d627524467359d8b4155c6dd2dfc7f065a5013e738692b1061d96dc2c86"
+    },
+    {
+      "file": "android/07-event-details.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 207030,
+      "sha256": "250d00fb4dfecb972a6f26bbd4b47bc2aad245ed6745438ebb789c5155d0eb3f"
+    },
+    {
+      "file": "android/08-profile.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 159400,
+      "sha256": "c6f5a01ab56ae7739c941c25455e7796dd4ab78736477a55b0fe54fe34440a43"
+    },
+    {
+      "file": "android/09-edit-event.png",
+      "width": 1080,
+      "height": 2424,
+      "bytes": 186553,
+      "sha256": "b723ab0436c36f91e2d35ccf48b6417b5f0fef375298a0baccfec1aa41accdca"
+    },
+    {
+      "file": "android/12-session-lock-landscape.png",
+      "width": 2424,
+      "height": 1080,
+      "bytes": 74726,
+      "sha256": "48df6fdee1582768829a14556b6926babf850d6eb8c20a4e0e7ac495a09bdcdd"
+    }
+  ]
+}

@@ -6,21 +6,21 @@ A React Native Community CLI calendar in TypeScript, without Expo. Includes Fire
 
 Resolved versions below come from `package-lock.json` and the native project configuration; use `npm ci` to reproduce them.
 
-| Component | Version |
-| --- | --- |
-| App | 0.0.1 |
-| React Native / React | 0.87.1 / 19.2.3 |
-| TypeScript | 6.0.3 |
-| React Native Community CLI | 20.2.0 |
-| Firebase | 12.19.0 |
+| Component                                            | Version                 |
+| ---------------------------------------------------- | ----------------------- |
+| App                                                  | 0.0.1                   |
+| React Native / React                                 | 0.87.1 / 19.2.3         |
+| TypeScript                                           | 6.0.3                   |
+| React Native Community CLI                           | 20.2.0                  |
+| Firebase                                             | 12.19.0                 |
 | React Navigation native / native stack / bottom tabs | 7.4.1 / 7.19.1 / 7.19.1 |
-| React Native Screens | 4.26.2 |
-| Safe Area Context | 5.10.0 |
-| AsyncStorage / Keychain | 3.1.1 / 10.0.0 |
-| Android compile / target / minimum SDK | 37 / 36 / 24 |
-| Android Build Tools / NDK | 37.0.0 / 27.1.12297006 |
-| Gradle / Kotlin | 9.4.1 / 2.2.0 |
-| iOS deployment target | 15.1 |
+| React Native Screens                                 | 4.26.2                  |
+| Safe Area Context                                    | 5.10.0                  |
+| AsyncStorage / Keychain                              | 3.1.1 / 10.0.0          |
+| Android compile / target / minimum SDK               | 37 / 36 / 24            |
+| Android Build Tools / NDK                            | 37.0.0 / 27.1.12297006  |
+| Gradle / Kotlin                                      | 9.4.1 / 2.2.0           |
+| iOS deployment target                                | 15.1                    |
 
 Development requires Node >=22.11.0 (verified with 24.12.0), JDK 17, Android Studio and `ANDROID_HOME`. iOS requires macOS, Xcode and CocoaPods; it has not been built on this Windows workstation.
 

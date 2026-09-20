@@ -1,0 +1,36 @@
+{
+  "verifiedOn": "2026-09-20",
+  "sourceCommit": "10cb8d1",
+  "readmeCommit": "dff9b5b",
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed, zero warnings",
+    "format": "passed",
+    "jestCommand": "npm test -- --runInBand --coverage",
+    "testSuitesPassed": 39,
+    "testsPassed": 393,
+    "coveragePercent": {
+      "statements": 95.01,
+      "branches": 85.8,
+      "functions": 95.18,
+      "lines": 95.08
+    }
+  },
+  "android": {
+    "command": ".\\gradlew.bat app:assembleRelease -PreactNativeArchitectures=x86_64",
+    "result": "BUILD SUCCESSFUL",
+    "apk": "android/app/build/outputs/apk/release/app-release.apk",
+    "apkSha256": "b1366b14f5e5a91b03369d9d0aeea5e6c9ddec60376dc91156e64531d9109d84",
+    "signing": "development default",
+    "device": "Pixel 10 AVD, Android 16, API 36, x86_64",
+    "installedAndLaunched": true,
+    "metroRequired": false
+  },
+  "pending": [
+    "iOS build and runtime verification",
+    "Physical Android/iOS biometric acceptance",
+    "Full notch, orientation, keyboard and large-text device matrix",
+    "Cross-platform animation and Reduce Motion visual acceptance",
+    "Commit/push final submission files and confirm reviewer access"
+  ]
+}
