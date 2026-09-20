@@ -145,8 +145,9 @@ Tap an event to open its details sheet; tap a day in month/week view (or the
 month's `+N` count) to open that day's agenda. Storage failures show a retry action.
 The local event store is device-wide; it is not account-scoped or cloud synced.
 Events can be edited from their details sheet. Biometric sign-in is available
-for previously authenticated users; see the [biometric guide](docs/biometric-sign-in.md)
-for setup, fallback behavior, security boundaries, and device checks.
+for previously authenticated users: enable it in Profile after a password
+sign-in. Each unlock needs a fresh biometric check and a successful token
+refresh, and the fallback is always password sign-in.
 Email verification and password recovery are not implemented yet.
 Logout signs out this installation; it does not revoke sessions on other devices.
 
@@ -198,9 +199,9 @@ Reusable UI lives in `src/shared/components`. Feature behavior lives in
 `src/features/auth`, `calendar`, and `profile`. Extract components when there is a
 real shared responsibility; keep validation and networking out of presentation code.
 
-The [UI library guide](docs/ui-library.md) documents the atomic structure,
-shared design tokens, typography, button variants, form inputs, checkboxes, and
-switches, with composition examples and testing guidance. Import components and
+Shared components follow an atomic structure: atoms are single controls,
+molecules combine a few for one responsibility, and organisms compose whole
+sections. Design tokens live in `src/shared/theme.ts`. Import components and
 their prop types from `src/shared/components`.
 
 ## Checks
@@ -227,7 +228,7 @@ Verified on September 17, 2026:
 
 Physical-device and iOS verification are still pending. Emulator testing does
 not establish biometric behavior. This historical milestone predates the
-[biometric session gate](docs/biometric-sign-in.md).
+biometric session gate.
 
 The `.env` migration was verified on September 18, 2026: all 28 tests across six
 suites, TypeScript, ESLint, and formatting of changed files passed. An Android
@@ -267,11 +268,8 @@ backup is not committed. The original starter also remains in Git history.
 Metro excludes `.git/` from its module and asset file map so local backups and
 diagnostic files cannot cause unwanted development refreshes.
 
-See [Subtask 1 requirements](docs/subtask-1-authentication.md) for acceptance criteria.
-
-For a beginner-friendly walkthrough of the actual code, read the
-[implementation guide](docs/implementation-guide.md). It follows a button tap
-through validation, Firebase, session state, and navigation, and explains the tests.
+A walkthrough of the code, the component library, navigation, storage, and the
+testing approach is kept outside the repository as a set of Word documents.
 
 References: [React Native CLI setup](https://reactnative.dev/docs/getting-started-without-a-framework),
 [Firebase React Native support](https://firebase.google.com/docs/web/environments-js-sdk),
